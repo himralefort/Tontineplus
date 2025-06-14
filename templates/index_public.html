@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section Modern -->
+<section class="hero-section bg-gradient-primary text-white py-5">
+    <div class="container py-5">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">Gestion de tontines 2.0</h1>
+                <p class="lead mb-4">La plateforme ultime pour gérer vos tontines et collectes en toute transparence.</p>
+                <div class="d-flex gap-3">
+                    <a href="{{ url_for('login') }}" class="btn btn-light btn-lg px-4 rounded-pill shadow">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Se connecter
+                    </a>
+                    <a href="{{ url_for('register') }}" class="btn btn-outline-light btn-lg px-4 rounded-pill">
+                        <i class="bi bi-person-plus me-2"></i>S'inscrire
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6 d-none d-lg-block">
+                <img src="{{ url_for('static', filename='images/finance-app.jpg') }}" alt="Finance App" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Pourquoi choisir notre plateforme ?</h2>
+            <p class="text-muted">Une expérience complète et sécurisée</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-lg bg-primary-light text-primary rounded-circle mb-4 mx-auto">
+                            <i class="bi bi-shield-lock fs-3"></i>
+                        </div>
+                        <h5>Sécurité maximale</h5>
+                        <p class="text-muted">Toutes vos transactions sont chiffrées et protégées.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-lg bg-primary-light text-primary rounded-circle mb-4 mx-auto">
+                            <i class="bi bi-graph-up-arrow fs-3"></i>
+                        </div>
+                        <h5>Transparence totale</h5>
+                        <p class="text-muted">Suivez chaque contribution en temps réel.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-lg bg-primary-light text-primary rounded-circle mb-4 mx-auto">
+                            <i class="bi bi-phone fs-3"></i>
+                        </div>
+                        <h5>Accès mobile</h5>
+                        <p class="text-muted">Gérez vos tontines depuis n'importe où.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Final CTA Section -->
+<section class="py-5 bg-light">
+    <div class="container text-center">
+        <h2 class="fw-bold mb-3">Prêt à nous rejoindre ?</h2>
+        <p class="lead text-muted mb-4">
+            Rejoignez des milliers de personnes qui gèrent leurs finances en communauté.
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg px-4 rounded-pill">
+                <i class="bi bi-person-plus me-2"></i>Créer un compte
+            </a>
+            <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg px-4 rounded-pill">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Se connecter
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

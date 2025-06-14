@@ -1,0 +1,36 @@
+<footer class="bg-dark text-white py-4 mt-auto">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <h5>TontinePlus</h5>
+                <p class="text-muted">Plateforme moderne de tontine et collecte de fonds pour la communauté.</p>
+            </div>
+            <div class="col-md-2 mb-3">
+                <h5>Liens</h5>
+                <ul class="list-unstyled">
+                    <li><a href="{{ url_for('index') }}" class="text-white">Accueil</a></li>
+                    <li><a href="{{ url_for('tontines_list') }}" class="text-white">Tontines</a></li>
+                    <li><a href="{{ url_for('campaigns_list') }}" class="text-white">Collectes</a></li>
+                </ul>
+            </div>
+            <div class="col-md-3 mb-3">
+                <h5>Légal</h5>
+                <ul class="list-unstyled">
+                    <li><a href="#" class="text-white">Conditions d'utilisation</a></li>
+                    <li><a href="#" class="text-white">Politique de confidentialité</a></li>
+                </ul>
+            </div>
+            <div class="col-md-3 mb-3">
+                <h5>Contact</h5>
+                <ul class="list-unstyled text-muted">
+                    <li><i class="bi bi-envelope me-2"></i> contact@tontineplus.com</li>
+                    <li><i class="bi bi-phone me-2"></i> +225 XX XX XX XX</li>
+                </ul>
+            </div>
+        </div>
+        <hr class="my-4 bg-secondary">
+        <div class="text-center">
+            <p class="mb-0">&copy; 2023 TontinePlus. Tous droits réservés.</p>
+        </div>
+    </div>
+</footer>

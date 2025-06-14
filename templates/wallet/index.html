@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Mon Portefeuille{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Mon Portefeuille</h3>
+                </div>
+                <div class="card-body">
+                    <div class="wallet-summary mb-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0">Solde Disponible</h4>
+                            <span class="badge bg-success fs-4">{{ wallet.balance|format_currency }} XOF</span>
+                        </div>
+                        <div class="d-flex mt-3">
+                            <a href="{{ url_for('wallet_deposit') }}" class="btn btn-primary me-2">
+                                <i class="bi bi-plus-circle"></i> Dépôt
+                            </a>
+                            <a href="{{ url_for('wallet_withdraw') }}" class="btn btn-outline-primary">
+                                <i class="bi bi-dash-circle"></i> Retrait
+                            </a>
+                        </div>
+                    </div>
+
+                    <h5 class="mb-3">Historique des Transactions</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Référence</th>
+                                    <th>Type</th>
+                                    <th>Montant</th>
+                                    <th>Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in transactions %}
+                                <tr>
+                                    <td>{{ transaction.created_at|format_datetime }}</td>
+                                    <td>{{ transaction.reference }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if transaction.transaction_type == 'deposit' %}bg-success
+                                            {% else %}bg-warning text-dark{% endif %}">
+                                            {{ transaction.transaction_type|capitalize }}
+                                        </span>
+                                    </td>
+                                    <td class="{% if transaction.transaction_type == 'deposit' %}text-success
+                                              {% else %}text-danger{% endif %}">
+                                        {% if transaction.transaction_type == 'deposit' %}+{% else %}-{% endif %}
+                                        {{ transaction.amount|format_currency }} XOF
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{% if transaction.status == 'completed' %}success
+                                            {% elif transaction.status == 'pending' %}warning text-dark
+                                            {% else %}danger{% endif %}">
+                                            {{ transaction.status|capitalize }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center">Aucune transaction trouvée</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

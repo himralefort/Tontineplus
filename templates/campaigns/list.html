@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Collectes de fonds{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0">Collectes de fonds</h2>
+        {% if 'user_id' in session %}
+        <a href="{{ url_for('campaign_create') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i> Créer une collecte
+        </a>
+        {% endif %}
+    </div>
+    
+    <div class="row g-4">
+        {% if campaigns %}
+            {% for campaign in campaigns %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm">
+                    {% if campaign.image_url %}
+                    <img src="{{ campaign.image_url }}" class="card-img-top" alt="{{ campaign.title }}" style="height: 180px; object-fit: cover;">
+                    {% else %}
+                    <div class="card-img-top bg-secondary" style="height: 180px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-image text-white fs-1"></i>
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ campaign.title }}</h5>
+                        <p class="card-text text-muted small">{{ campaign.description|truncate(100) }}</p>
+                        
+                        <div class="progress mb-3" style="height: 8px;">
+                            <div class="progress-bar bg-success" role="progressbar" 
+                                 style="width: {{ (campaign.current_amount / campaign.target_amount * 100)|round(1) }}%">
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mb-3">
+                            <small class="text-muted">
+                                {{ campaign.current_amount|format_currency }} XOF
+                            </small>
+                            <small class="text-muted">
+                                {{ campaign.target_amount|format_currency }} XOF
+                            </small>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <a href="{{ url_for('campaign_detail', campaign_id=campaign.id) }}" class="btn btn-outline-primary">
+                                Voir les détails
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-collection fs-1 text-muted"></i>
+                        <h5 class="mt-3">Aucune collecte disponible pour le moment</h5>
+                        {% if 'user_id' not in session %}
+                        <p class="text-muted">Connectez-vous pour créer une collecte</p>
+                        <a href="{{ url_for('login') }}" class="btn btn-primary">Se connecter</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

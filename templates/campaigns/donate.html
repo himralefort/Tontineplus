@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Faire un don - {{ campaign.title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h3 class="mb-0">Faire un don</h3>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <h4>{{ campaign.title }}</h4>
+                    <p class="text-muted">Votre contribution aidera à atteindre l'objectif de {{ campaign.target_amount|format_currency }} XOF</p>
+                </div>
+                
+                <form method="POST" action="{{ url_for('campaign_donate', campaign_id=campaign.id) }}">
+                    <div class="mb-4">
+                        <label for="amount" class="form-label">Montant du don (XOF) *</label>
+                        <div class="input-group">
+                            <span class="input-group-text">XOF</span>
+                            <input type="number" class="form-control" id="amount" name="amount" min="100" step="100" required>
+                        </div>
+                        <div class="form-text">Le montant minimum est de 100 XOF</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="message" class="form-label">Message d'encouragement (optionnel)</label>
+                        <textarea class="form-control" id="message" name="message" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_anonymous" name="is_anonymous">
+                            <label class="form-check-label" for="is_anonymous">Don anonyme</label>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h6 class="card-title">Méthode de paiement</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="payment_method" id="wallet_payment" value="wallet" checked>
+                                <label class="form-check-label" for="wallet_payment">
+                                    Portefeuille électronique
+                                </label>
+                            </div>
+                            <div class="ps-4 mt-2">
+                                <p class="small text-muted mb-1">Solde disponible: <strong>{{ wallet.balance|format_currency }} XOF</strong></p>
+                                {% if wallet.balance < 100 %}
+                                <p class="small text-danger">Votre solde est insuffisant. Veuillez recharger votre portefeuille.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Les dons ne sont pas remboursables. Merci de vérifier le montant avant de confirmer.
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary py-2" {% if wallet.balance < 100 %}disabled{% endif %}>
+                            Confirmer le don
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

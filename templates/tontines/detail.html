@@ -1,0 +1,1435 @@
+{% extends "base.html" %}
+
+{% block title %}{{ tontine.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #6366f1;
+        --primary-hover: #4f46e5;
+        --secondary-color: #8b5cf6;
+        --success-color: #10b981;
+        --danger-color: #ef4444;
+        --warning-color: #f59e0b;
+        --info-color: #3b82f6;
+        --dark-color: #1e293b;
+        --light-color: #f8fafc;
+        --glass-blur: 12px;
+        --transition-speed: 0.3s;
+        --total-collected-color: #8b5cf6;
+    }
+
+    /* Base Styles */
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+        color: var(--dark-color);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        min-height: 100vh;
+    }
+
+    /* Glassmorphism Effect */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(var(--glass-blur));
+        -webkit-backdrop-filter: blur(var(--glass-blur));
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+        transition: all var(--transition-speed) ease;
+    }
+
+    .glass-card:hover {
+        box-shadow: 0 12px 48px rgba(0, 0, 0, 0.1);
+        transform: translateY(-5px);
+    }
+
+    /* Total Collected Highlight - MEGA STYLE */
+    .total-collected-highlight {
+        background: linear-gradient(135deg, var(--total-collected-color) 0%, #6d28d9 100%);
+        color: white;
+        border-radius: 16px;
+        padding: 25px;
+        margin: 25px 0;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+        border: none;
+        animation: pulse-glow 2s infinite alternate;
+        text-align: center;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .total-collected-highlight::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+        transform: rotate(30deg);
+        z-index: 0;
+    }
+
+    .total-collected-highlight .title {
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 8px;
+        opacity: 0.9;
+        font-weight: 600;
+        position: relative;
+        z-index: 1;
+    }
+
+    .total-collected-highlight .amount {
+        font-size: 2.8rem;
+        font-weight: 800;
+        line-height: 1;
+        margin: 15px 0;
+        position: relative;
+        z-index: 1;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .total-collected-highlight .subtext {
+        font-size: 0.95rem;
+        opacity: 0.9;
+        position: relative;
+        z-index: 1;
+        margin-bottom: 15px;
+    }
+
+    .total-collected-highlight .progress-indicator {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 100px;
+        padding: 8px 15px;
+        display: inline-flex;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+        backdrop-filter: blur(5px);
+    }
+
+    @keyframes pulse-glow {
+        0% {
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+            transform: scale(1);
+        }
+        100% {
+            box-shadow: 0 0 40px rgba(139, 92, 246, 0.6);
+            transform: scale(1.01);
+        }
+    }
+
+    /* Typography */
+    .display-title {
+        font-weight: 800;
+        letter-spacing: -0.025em;
+        line-height: 1.2;
+    }
+
+    /* Buttons */
+    .btn-neon {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 12px 24px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px -5px rgba(99, 102, 241, 0.4);
+        transition: all var(--transition-speed) ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-neon:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px -5px rgba(99, 102, 241, 0.6);
+        color: white;
+    }
+
+    .btn-neon::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: all 0.6s ease;
+    }
+
+    .btn-neon:hover::before {
+        left: 100%;
+    }
+
+    /* Badges */
+    .badge-modern {
+        border-radius: 12px;
+        padding: 6px 12px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        letter-spacing: 0.025em;
+    }
+
+    /* Avatar */
+    .avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        object-fit: cover;
+        border: 3px solid white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all var(--transition-speed) ease;
+    }
+
+    .avatar:hover {
+        transform: scale(1.1);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Progress Bars */
+    .progress-modern {
+        height: 8px;
+        border-radius: 100px;
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .progress-modern .progress-bar {
+        border-radius: 100px;
+        background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    }
+
+    /* Table */
+    .table-modern {
+        --bs-table-bg: transparent;
+        --bs-table-striped-bg: rgba(0, 0, 0, 0.02);
+        --bs-table-hover-bg: rgba(0, 0, 0, 0.03);
+    }
+
+    .table-modern th {
+        border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+    }
+
+    /* Chat Interface */
+    .chat-container {
+        height: 400px;
+        border-radius: 16px;
+        overflow-y: auto;
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .chat-message {
+        padding: 12px 16px;
+        margin: 8px;
+        border-radius: 18px;
+        max-width: 75%;
+        position: relative;
+        font-size: 0.95rem;
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message-sent {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        margin-left: auto;
+        border-bottom-right-radius: 4px;
+    }
+
+    .message-received {
+        background: #f1f5f9;
+        margin-right: auto;
+        border-bottom-left-radius: 4px;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 0, 0, 0.3);
+    }
+
+    /* Animations */
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
+        70% { box-shadow: 0 0 0 12px rgba(99, 102, 241, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+    }
+
+    .pulse {
+        animation: pulse 2s infinite;
+    }
+
+    /* Floating Action Button */
+    .fab {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        box-shadow: 0 10px 30px -5px rgba(99, 102, 241, 0.5);
+        z-index: 1000;
+        transition: all var(--transition-speed) ease;
+        cursor: pointer;
+    }
+
+    .fab:hover {
+        transform: scale(1.1) translateY(-5px);
+        box-shadow: 0 15px 35px -5px rgba(99, 102, 241, 0.6);
+    }
+
+    /* Dashboard Stats */
+    .stat-card {
+        padding: 20px;
+        border-radius: 16px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card .icon {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        font-size: 2.5rem;
+        opacity: 0.2;
+    }
+
+    /* Tabs */
+    .nav-tabs-modern {
+        border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .nav-tabs-modern .nav-link {
+        border: none;
+        color: #64748b;
+        font-weight: 600;
+        padding: 12px 20px;
+        position: relative;
+        transition: all var(--transition-speed) ease;
+    }
+
+    .nav-tabs-modern .nav-link:hover {
+        color: var(--primary-color);
+    }
+
+    .nav-tabs-modern .nav-link.active {
+        color: var(--primary-color);
+        background: transparent;
+    }
+
+    .nav-tabs-modern .nav-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        border-radius: 3px 3px 0 0;
+    }
+
+    /* Form Elements */
+    .form-control-modern {
+        border-radius: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        padding: 12px 16px;
+        transition: all var(--transition-speed) ease;
+    }
+
+    .form-control-modern:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
+    }
+
+    /* List Group */
+    .list-group-item-modern {
+        border-radius: 12px;
+        margin-bottom: 8px;
+        border: none;
+        transition: all var(--transition-speed) ease;
+        background: rgba(255, 255, 255, 0.7);
+    }
+
+    .list-group-item-modern:hover {
+        background: rgba(255, 255, 255, 0.9);
+        transform: translateX(5px);
+    }
+
+    /* Breadcrumb */
+    .breadcrumb-modern {
+        background-color: transparent;
+        padding: 0;
+    }
+
+    .breadcrumb-item.active {
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 992px) {
+        .glass-card {
+            margin-bottom: 20px;
+        }
+    }
+
+    /* Financial Summary */
+    .financial-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .financial-card {
+        background: white;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        transition: all var(--transition-speed) ease;
+    }
+
+    .financial-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .financial-card .title {
+        font-size: 0.875rem;
+        color: #64748b;
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+
+    .financial-card .amount {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--dark-color);
+    }
+
+    /* Contribution Progress */
+    .contribution-progress {
+        margin-top: 24px;
+    }
+
+    .contribution-progress .progress-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .contribution-progress .progress-label {
+        width: 120px;
+        font-weight: 600;
+    }
+
+    /* Payment History */
+    .payment-history {
+        margin-top: 32px;
+    }
+
+    .payment-history .table {
+        margin-top: 16px;
+    }
+
+    /* Member List */
+    .member-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 16px;
+    }
+
+    .member-card {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: all var(--transition-speed) ease;
+    }
+
+    .member-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .member-card .avatar {
+        margin-right: 12px;
+    }
+
+    .member-card .info {
+        flex: 1;
+    }
+
+    .member-card .name {
+        font-weight: 600;
+        margin-bottom: 2px;
+    }
+
+    .member-card .joined {
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    /* Cycle Timeline */
+    .cycle-timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+
+    .cycle-timeline::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 10px;
+        height: 100%;
+        width: 2px;
+        background: rgba(0, 0, 0, 0.1);
+    }
+
+    .cycle-item {
+        position: relative;
+        padding-bottom: 24px;
+    }
+
+    .cycle-item::before {
+        content: '';
+        position: absolute;
+        top: 5px;
+        left: -30px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: white;
+        border: 4px solid var(--primary-color);
+    }
+
+    .cycle-item.completed::before {
+        border-color: var(--success-color);
+    }
+
+    .cycle-item.current::before {
+        border-color: var(--warning-color);
+        animation: pulse 2s infinite;
+    }
+
+    .cycle-item .cycle-content {
+        background: white;
+        padding: 16px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .cycle-item .cycle-period {
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .cycle-item .cycle-status {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 100px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .cycle-item .cycle-status.completed {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success-color);
+    }
+
+    .cycle-item .cycle-status.current {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning-color);
+    }
+
+    /* Transaction Cards */
+    .transaction-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        margin-bottom: 12px;
+        transition: all var(--transition-speed) ease;
+    }
+
+    .transaction-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .transaction-card .transaction-info {
+        flex: 1;
+    }
+
+    .transaction-card .transaction-date {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-bottom: 4px;
+    }
+
+    .transaction-card .transaction-description {
+        font-weight: 600;
+    }
+
+    .transaction-card .transaction-amount {
+        font-weight: 700;
+    }
+
+    .transaction-card .deposit {
+        color: var(--success-color);
+    }
+
+    .transaction-card .withdrawal {
+        color: var(--danger-color);
+    }
+
+    /* Responsive Financial Dashboard */
+    @media (max-width: 768px) {
+        .financial-summary {
+            grid-template-columns: 1fr;
+        }
+        
+        .member-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .total-collected-highlight .amount {
+            font-size: 2.2rem;
+        }
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Header Section -->
+            <div class="glass-card p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-start flex-wrap">
+                    <div>
+                        <h1 class="display-title mb-2">{{ tontine.name }}</h1>
+                        <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
+                            <span class="badge badge-modern bg-{{ 'success' if tontine.is_active else 'secondary' }}">
+                                {{ 'Active' if tontine.is_active else 'Inactive' }}
+                            </span>
+                            <span class="badge badge-modern bg-primary">
+                                {{ tontine.frequency|capitalize }}
+                            </span>
+                            {% if current_user.id == tontine.creator_id %}
+                            <span class="badge badge-modern bg-info">
+                                <i class="bi bi-star-fill me-1"></i> Créateur
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if current_user.id == tontine.creator_id or current_user.admin %}
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="tontineActions" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="tontineActions">
+                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editTontineModal">
+                                <i class="bi bi-pencil me-2"></i>Modifier
+                            </a></li>
+                            {% if tontine.is_active %}
+                            <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#closeTontineModal">
+                                <i class="bi bi-lock me-2"></i>Clôturer
+                            </a></li>
+                            {% else %}
+                            <li><a class="dropdown-item text-success" href="#" data-bs-toggle="modal" data-bs-target="#reopenTontineModal">
+                                <i class="bi bi-unlock me-2"></i>Réouvrir
+                            </a></li>
+                            {% endif %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#addMemberModal">
+                                <i class="bi bi-person-plus me-2"></i>Ajouter membre
+                            </a></li>
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <p class="lead text-muted mb-4">{{ tontine.description }}</p>
+                
+                <!-- Financial Summary -->
+                <div class="financial-summary">
+                    <div class="financial-card">
+                        <div class="title">Cotisation</div>
+                        <div class="amount">{{ (tontine.amount_per_member * memberships|length) | format_currency }} XOF</div>
+                    </div>
+                    
+                    <div class="financial-card">
+                        <div class="title">Membres</div>
+                        <div class="amount">{{ memberships|length }} / {{ tontine.max_members }}</div>
+                    </div>
+                    
+                    <div class="financial-card">
+                        <div class="title">Prochain cycle</div>
+                        <div class="amount">
+                            {% if next_cycle_start %}
+                                {{ next_cycle_start|format_date('short') }}
+                            {% else %}
+                                Aucun
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- TOTAL COLLECTED HIGHLIGHT BLOCK -->
+                <div class="total-collected-highlight">
+                    <div class="title">Total Collecté</div>
+                    <div class="amount">{{ total_collected|format_currency }} XOF</div>
+                    <div class="subtext">Montant disponible pour le bénéficiaire</div>
+                    <div class="progress-indicator">
+                        <i class="bi bi-arrow-up-circle-fill me-2"></i>
+                        {{ ((total_collected / (tontine.amount_per_member * memberships|length)) * 100 if (tontine.amount_per_member * memberships|length) > 0 else 0) | round(1) }}% complété
+                    </div>
+                </div>
+                
+                <!-- Join Button or Member Status -->
+                {% if not is_member and tontine.is_active and tontine.max_members > memberships|length %}
+                <div class="d-grid">
+                    <a href="{{ url_for('tontine_join', tontine_id=tontine.id) }}" class="btn btn-neon py-3 fw-bold">
+                        <i class="bi bi-arrow-right-circle me-2"></i>Rejoindre cette tontine
+                    </a>
+                </div>
+                {% elif is_member %}
+                <div class="alert alert-success d-flex align-items-center">
+                    <i class="bi bi-check-circle-fill me-2 fs-4"></i>
+                    <div>
+                        <h6 class="mb-0">Vous êtes membre de cette tontine</h6>
+                        <small>Prochain cycle: {{ next_cycle_start|format_date('short') if next_cycle_start else "Aucun cycle programmé" }}</small>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Contributions Section -->
+            <div class="glass-card p-4 mb-4">
+                <h3 class="mb-4 fw-bold">Contributions des membres</h3>
+                
+                <div class="contribution-progress">
+                    {% for membership in memberships %}
+                    <div class="progress-container d-flex align-items-center mb-3">
+                        <div class="progress-label d-flex align-items-center me-3" style="min-width: 150px;">
+                            <img src="{{ membership.user.profile_picture_url }}"
+                                 alt="{{ membership.user.username }}"
+                                 class="avatar me-2 rounded-circle"
+                                 width="100" height="100"
+                                 onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/default-avatar.png') }}';">
+                            <span>{{ membership.user.username }}</span>
+                        </div>
+                        
+                        <div class="progress flex-grow-1" style="height: 24px;">
+                            <div class="progress-bar" 
+                                role="progressbar" 
+                                style="width: {{ contributions[membership.user_id]['percentage'] }}%" 
+                                aria-valuenow="{{ contributions[membership.user_id]['percentage'] }}" 
+                                aria-valuemin="0" 
+                                aria-valuemax="100">
+                            </div>
+                        </div>
+                        <div class="ms-3 text-end" style="min-width: 80px;">
+                            <span class="fw-bold">{{ contributions[membership.user_id]['total']|format_currency }} XOF</span>
+                            <span class="d-block text-muted small">{{ contributions[membership.user_id]['percentage']|round(1) }}%</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                {% if is_member and current_cycle and not contributions[current_user.id]['complete'] %}
+                <div class="d-grid mt-4">
+                    <form method="POST" action="{{ url_for('make_payment', tontine_id=tontine.id) }}">
+                        <button type="submit" class="btn btn-neon py-3 fw-bold">
+                            <i class="bi bi-credit-card me-2"></i>Payer ma cotisation ({{ tontine.amount_per_member|format_currency }} XOF)
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Members Section -->
+            <div class="glass-card p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="mb-0 fw-bold">Membres</h3>
+                    <span class="badge bg-primary rounded-pill">{{ memberships|length }}</span>
+                </div>
+                
+                <div class="member-grid">
+                    {% for membership in memberships %}
+                    <div class="member-card">
+                        <img src="{{ membership.user.profile_picture_url }}" 
+                             class="avatar rounded-circle"
+                             width="64" height="64"
+                             alt="{{ membership.user.username }}"
+                             onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/default-avatar.png') }}';">
+                        <div class="info">
+                            <div class="name">{{ membership.user.username }}</div>
+                            <div class="joined">Rejoint le {{ membership.joined_at|format_date('short') }}</div>
+                        </div>
+                        {% if current_user.id == tontine.creator_id and membership.user_id != current_user.id %}
+                        <button class="btn btn-sm btn-outline-danger rounded-circle" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#removeMemberModal"
+                                data-user-id="{{ membership.user.id }}"
+                                data-username="{{ membership.user.username }}">
+                            <i class="bi bi-person-x"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Cycles Section -->
+            <div class="glass-card p-4 mb-4">
+                <h3 class="mb-4 fw-bold">Cycles de tontine</h3>
+                
+                {% if cycles %}
+                <div class="cycle-timeline">
+                    {% for cycle in cycles %}
+                    <div class="cycle-item {% if cycle.is_completed %}completed{% elif cycle.id == current_cycle.id %}current{% endif %}">
+                        <div class="cycle-content">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="cycle-period">
+                                    {{ cycle.start_date|format_date('short') }} - {{ cycle.end_date|format_date('short') }}
+                                </div>
+                                <span class="cycle-status {% if cycle.is_completed %}completed{% elif cycle.id == current_cycle.id %}current{% endif %}">
+                                    {% if cycle.is_completed %}Terminé{% elif cycle.id == current_cycle.id %}En cours{% else %}À venir{% endif %}
+                                </span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small class="text-muted">Bénéficiaire:</small>
+                                    <div>
+                                        {% if cycle.beneficiary_id %}
+                                            {% if cycle.beneficiary_id == current_user.id %}
+                                                <span class="badge bg-success">Vous</span>
+                                            {% else %}
+                                                {{ beneficiaries.get(cycle.beneficiary_id).username if beneficiaries.get(cycle.beneficiary_id) else 'Inconnu' }}
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">À déterminer</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <small class="text-muted">Montant:</small>
+                                    <div class="fw-bold">{{ (tontine.amount_per_member * memberships|length)|format_currency }} XOF</div>
+                                </div>
+                                
+                                {% if current_user.id == tontine.creator_id and not cycle.is_completed and cycle.end_date < datetime.utcnow() %}
+                                <button class="btn btn-sm btn-success rounded-pill" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#selectBeneficiaryModal"
+                                        data-cycle-id="{{ cycle.id }}">
+                                    <i class="bi bi-award me-1"></i> Choisir
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-calendar fs-1 text-muted mb-3"></i>
+                    <h5 class="fw-bold">Aucun cycle pour le moment</h5>
+                    <p class="text-muted">Créez votre premier cycle pour commencer</p>
+                </div>
+                {% endif %}
+                
+                {% if current_user.id == tontine.creator_id and tontine.is_active %}
+                <div class="d-grid mt-4">
+                    <button class="btn btn-neon py-3 fw-bold" data-bs-toggle="modal" data-bs-target="#newCycleModal">
+                        <i class="bi bi-plus-circle me-2"></i>Créer un nouveau cycle
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Transaction History -->
+            <div class="glass-card p-4">
+                <h3 class="mb-4 fw-bold">Historique des transactions</h3>
+                
+                {% if transactions %}
+                <div class="payment-history">
+                    {% for transaction in transactions %}
+                    <div class="transaction-card">
+                        <div class="transaction-info">
+                            <div class="transaction-date">{{ transaction.created_at|format_date('short') }}</div>
+                            <div class="transaction-description">{{ transaction.description }}</div>
+                        </div>
+                        <div class="transaction-amount {% if transaction.transaction_type == 'deposit' %}deposit{% else %}withdrawal{% endif %}">
+                            {{ '+' if transaction.transaction_type == 'deposit' else '-' }}{{ transaction.amount|format_currency }} XOF
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-wallet fs-1 text-muted mb-3"></i>
+                    <h5 class="fw-bold">Aucune transaction récente</h5>
+                    <p class="text-muted">Vos transactions apparaîtront ici</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Creator Section -->
+            <div class="glass-card p-4 mb-4">
+                <h5 class="fw-bold mb-3">Créateur</h5>
+                <div class="d-flex align-items-center">
+                    <img src="{{ creator.profile_picture_url }}" 
+                        class="avatar me-3 rounded-circle"
+                        width="64" height="64"
+                        alt="{{ creator.username }}"
+                        onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/default-avatar.png') }}';">
+                    <div>
+                        <h6 class="mb-0 fw-bold">{{ creator.username }}</h6>
+                        <small class="text-muted">Créé le {{ tontine.created_at|format_date('short') }}</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Rules Section -->
+            <div class="glass-card p-4 mb-4">
+                <h5 class="fw-bold mb-3">Règles de la tontine</h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item list-group-item-modern d-flex align-items-center border-0 px-0">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded me-3">
+                            <i class="bi bi-cash-coin text-primary"></i>
+                        </div>
+                        <span>Cotisation de {{ tontine.amount_per_member|format_currency }} XOF {{ tontine.frequency }}</span>
+                    </li>
+                    <li class="list-group-item list-group-item-modern d-flex align-items-center border-0 px-0">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded me-3">
+                            <i class="bi bi-people text-primary"></i>
+                        </div>
+                        <span>Maximum {{ tontine.max_members }} membre{{ 's' if tontine.max_members > 1 else '' }}</span>
+                    </li>
+                    <li class="list-group-item list-group-item-modern d-flex align-items-center border-0 px-0">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded me-3">
+                            <i class="bi bi-shuffle text-primary"></i>
+                        </div>
+                        <span>Bénéficiaire choisi par tirage au sort</span>
+                    </li>
+                    <li class="list-group-item list-group-item-modern d-flex align-items-center border-0 px-0">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded me-3">
+                            <i class="bi bi-shield-lock text-primary"></i>
+                        </div>
+                        <span>Paiements traçables et sécurisés</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Chat Section -->
+            <div class="glass-card p-0 overflow-hidden">
+                <div class="p-4 border-bottom">
+                    <h5 class="mb-0 fw-bold">Discussion</h5>
+                </div>
+                <div class="p-0">
+                    <div id="chat-container" class="chat-container p-3"></div>
+                    <div class="p-3 border-top bg-light">
+                        <div class="input-group">
+                            <input type="text" id="message-input" class="form-control form-control-modern" placeholder="Écrire un message...">
+                            <button class="btn btn-neon" id="send-button">
+                                <i class="bi bi-send-fill"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Action Button -->
+{% if current_user.id == tontine.creator_id or current_user.admin %}
+<div class="fab pulse" data-bs-toggle="modal" data-bs-target="#tontineActionsModal">
+    <i class="bi bi-lightning-charge"></i>
+</div>
+{% endif %}
+
+<!-- Modals -->
+{% if current_user.id == tontine.creator_id or current_user.admin %}
+<!-- Add Member Modal -->
+<div class="modal fade" id="addMemberModal" tabindex="-1" aria-labelledby="addMemberModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addMemberModalLabel">Ajouter un membre</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_member', tontine_id=tontine.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="username" class="form-label fw-bold">Nom d'utilisateur</label>
+                        <input type="text" class="form-control form-control-modern" id="username" name="username" required>
+                        <div class="form-text">Entrez le nom d'utilisateur de la personne à ajouter</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary rounded-pill">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Remove Member Modal -->
+<div class="modal fade" id="removeMemberModal" tabindex="-1" aria-labelledby="removeMemberModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="removeMemberModalLabel">Retirer un membre</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('remove_member', tontine_id=tontine.id) }}">
+                <input type="hidden" id="remove-user-id" name="user_id">
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-exclamation-triangle-fill text-danger fs-1"></i>
+                    </div>
+                    <p class="text-center">Êtes-vous sûr de vouloir retirer <span id="remove-username" class="fw-bold"></span> de cette tontine ?</p>
+                    <p class="text-center text-danger fw-bold">Cette action est irréversible.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger rounded-pill">Confirmer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Tontine Modal -->
+<div class="modal fade" id="editTontineModal" tabindex="-1" aria-labelledby="editTontineModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="editTontineModalLabel">Modifier la tontine</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('edit_tontine', tontine_id=tontine.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit-name" class="form-label fw-bold">Nom</label>
+                        <input type="text" class="form-control form-control-modern" id="edit-name" name="name" value="{{ tontine.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-description" class="form-label fw-bold">Description</label>
+                        <textarea class="form-control form-control-modern" id="edit-description" name="description" rows="3">{{ tontine.description }}</textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-amount" class="form-label fw-bold">Montant par membre (XOF)</label>
+                            <input type="number" class="form-control form-control-modern" id="edit-amount" name="amount" 
+                                   value="{{ tontine.amount_per_member }}" min="100" step="100" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-frequency" class="form-label fw-bold">Fréquence</label>
+                            <select class="form-select form-control-modern" id="edit-frequency" name="frequency" required>
+                                <option value="daily" {% if tontine.frequency == 'daily' %}selected{% endif %}>Quotidienne</option>
+                                <option value="weekly" {% if tontine.frequency == 'weekly' %}selected{% endif %}>Hebdomadaire</option>
+                                <option value="monthly" {% if tontine.frequency == 'monthly' %}selected{% endif %}>Mensuelle</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-max-members" class="form-label fw-bold">Nombre maximum de membres</label>
+                        <input type="number" class="form-control form-control-modern" id="edit-max-members" name="max_members" 
+                               value="{{ tontine.max_members }}" min="{{ memberships|length }}" required>
+                        <div class="form-text">Ne peut pas être inférieur au nombre actuel de membres ({{ memberships|length }})</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary rounded-pill">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Close Tontine Modal -->
+<div class="modal fade" id="closeTontineModal" tabindex="-1" aria-labelledby="closeTontineModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="closeTontineModalLabel">Clôturer la tontine</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('close_tontine', tontine_id=tontine.id) }}">
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-lock-fill text-danger fs-1"></i>
+                    </div>
+                    <p class="text-center">Êtes-vous sûr de vouloir clôturer cette tontine ?</p>
+                    <p class="text-center text-danger fw-bold">Les membres ne pourront plus rejoindre la tontine.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger rounded-pill">Confirmer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Reopen Tontine Modal -->
+<div class="modal fade" id="reopenTontineModal" tabindex="-1" aria-labelledby="reopenTontineModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="reopenTontineModalLabel">Réouvrir la tontine</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('reopen_tontine', tontine_id=tontine.id) }}">
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-unlock-fill text-success fs-1"></i>
+                    </div>
+                    <p class="text-center">Êtes-vous sûr de vouloir réouvrir cette tontine ?</p>
+                    <p class="text-center text-success fw-bold">Les membres pourront à nouveau rejoindre la tontine.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-success rounded-pill">Confirmer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- New Cycle Modal -->
+<div class="modal fade" id="newCycleModal" tabindex="-1" aria-labelledby="newCycleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="newCycleModalLabel">Créer un nouveau cycle</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('create_cycle', tontine_id=tontine.id) }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="start-date" class="form-label fw-bold">Date de début</label>
+                            <input type="date" class="form-control form-control-modern" id="start-date" name="start_date" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="end-date" class="form-label fw-bold">Date de fin</label>
+                            <input type="date" class="form-control form-control-modern" id="end-date" name="end_date" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="auto-select" name="auto-select">
+                            <label class="form-check-label" for="auto-select">
+                                Sélectionner automatiquement le bénéficiaire à la fin du cycle
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary rounded-pill">Créer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Select Beneficiary Modal -->
+<div class="modal fade" id="selectBeneficiaryModal" tabindex="-1" aria-labelledby="selectBeneficiaryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="selectBeneficiaryModalLabel">Sélection du bénéficiaire</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            {% if cycle %}
+            <form method="POST" action="{{ url_for('select_beneficiary', cycle_id=cycle.id) }}">
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Méthode de sélection :</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="selection_method" id="manualSelection" value="manual" autocomplete="off" checked>
+                            <label class="btn btn-outline-primary" for="manualSelection">
+                                <i class="bi bi-person-lines-fill me-2"></i>Choix manuel
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="selection_method" id="randomSelection" value="random" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="randomSelection">
+                                <i class="bi bi-shuffle me-2"></i>Tirage au sort
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div id="manualSelectionSection">
+                        <label class="form-label fw-bold">Sélectionnez le bénéficiaire :</label>
+                        <div class="list-group mb-3">
+                            {% for membership in memberships %}
+                            {% set has_paid = contributions[membership.user_id]['complete'] %}
+                            <label class="list-group-item list-group-item-modern {{ 'disabled' if not has_paid }}">
+                                <input class="form-check-input me-2" type="radio" name="beneficiary_id" 
+                                       value="{{ membership.user.id }}" {{ 'disabled' if not has_paid }} required>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        {{ membership.user.username }}
+                                        {% if membership.user_id == tontine.creator_id %}
+                                        <span class="badge bg-info ms-2">Créateur</span>
+                                        {% endif %}
+                                    </div>
+                                    <span class="badge bg-{{ 'success' if has_paid else 'secondary' }}">
+                                        {{ 'A payé' if has_paid else 'N\'a pas payé' }}
+                                    </span>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="amount-received" class="form-label fw-bold">Montant total à verser (XOF)</label>
+                        <input type="number" class="form-control form-control-modern" id="amount-received" 
+                               value="{{ (tontine.amount_per_member * memberships|length) }}" readonly>
+                        <div class="form-text">Calculé automatiquement (cotisation × nombre de membres)</div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Le bénéficiaire recevra le montant total sur son portefeuille.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary rounded-pill">Confirmer la sélection</button>
+                </div>
+            </form>
+            {% else %}
+            <div class="modal-body">
+                <div class="alert alert-danger">Cycle introuvable.</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+    // Gestion des modals
+    document.addEventListener('DOMContentLoaded', function() {
+        // Modal Supprimer Membre
+        const removeMemberModal = document.getElementById('removeMemberModal');
+        if (removeMemberModal) {
+            removeMemberModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const userId = button.getAttribute('data-user-id');
+                const username = button.getAttribute('data-username');
+                
+                document.getElementById('remove-user-id').value = userId;
+                document.getElementById('remove-username').textContent = username;
+            });
+        }
+        
+        // Modal Choisir Bénéficiaire
+        const selectBeneficiaryModal = document.getElementById('selectBeneficiaryModal');
+        if (selectBeneficiaryModal) {
+            selectBeneficiaryModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const cycleId = button.getAttribute('data-cycle-id');
+                document.getElementById('cycle-id').value = cycleId;
+            });
+        }
+        
+        // Gestion de la sélection du bénéficiaire
+        const manualSection = document.getElementById('manualSelectionSection');
+        const randomRadio = document.getElementById('randomSelection');
+        const manualRadio = document.getElementById('manualSelection');
+        
+        if (randomRadio && manualRadio) {
+            randomRadio.addEventListener('change', function() {
+                if (this.checked) {
+                    manualSection.style.opacity = '0.5';
+                    manualSection.querySelectorAll('input[type="radio"]').forEach(radio => {
+                        radio.disabled = true;
+                    });
+                }
+            });
+            
+            manualRadio.addEventListener('change', function() {
+                if (this.checked) {
+                    manualSection.style.opacity = '1';
+                    manualSection.querySelectorAll('input[type="radio"]').forEach(radio => {
+                        radio.disabled = false;
+                    });
+                }
+            });
+        }
+        
+        // Chat
+        const socket = io();
+        const room = "tontine_{{ tontine.id }}";
+        
+        // Rejoindre la room
+        socket.emit('join', { 
+            room: room,
+            username: "{{ current_user.username }}"
+        });
+        
+        // Recevoir les messages
+        socket.on('message', function(data) {
+            const chatContainer = document.getElementById('chat-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('chat-message');
+            
+            if (data.sender === "{{ current_user.username }}") {
+                messageDiv.classList.add('message-sent');
+                messageDiv.innerHTML = `
+                    <div class="d-flex justify-content-end">
+                        <div>
+                            <strong>Vous</strong>
+                            <small class="ms-2">${new Date(data.timestamp).toLocaleTimeString()}</small>
+                            <div>${data.message}</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                messageDiv.classList.add('message-received');
+                messageDiv.innerHTML = `
+                    <div class="d-flex">
+                        <div>
+                            <strong>${data.sender}</strong>
+                            <small class="ms-2">${new Date(data.timestamp).toLocaleTimeString()}</small>
+                            <div>${data.message}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        });
+        
+        // Envoyer un message
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message) {
+                socket.emit('message', {
+                    room: room,
+                    message: message,
+                    sender: "{{ current_user.username }}",
+                    timestamp: new Date().toISOString()
+                });
+                messageInput.value = '';
+            }
+        }
+        
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        // Charger l'historique du chat
+        fetch("{{ url_for('get_chat_history', tontine_id=tontine.id) }}")
+            .then(response => response.json())
+            .then(messages => {
+                const chatContainer = document.getElementById('chat-container');
+                messages.forEach(data => {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.classList.add('chat-message');
+                    
+                    if (data.sender === "{{ current_user.username }}") {
+                        messageDiv.classList.add('message-sent');
+                        messageDiv.innerHTML = `
+                            <div class="d-flex justify-content-end">
+                                <div>
+                                    <strong>Vous</strong>
+                                    <small class="ms-2">${new Date(data.timestamp).toLocaleTimeString()}</small>
+                                    <div>${data.message}</div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        messageDiv.classList.add('message-received');
+                        messageDiv.innerHTML = `
+                            <div class="d-flex">
+                                <div>
+                                    <strong>${data.sender}</strong>
+                                    <small class="ms-2">${new Date(data.timestamp).toLocaleTimeString()}</small>
+                                    <div>${data.message}</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    chatContainer.appendChild(messageDiv);
+                });
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            });
+
+        // Set default dates for new cycle modal
+        const today = new Date().toISOString().split('T')[0];
+        const nextWeek = new Date();
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        const nextWeekFormatted = nextWeek.toISOString().split('T')[0];
+        
+        document.getElementById('start-date').value = today;
+        document.getElementById('end-date').value = nextWeekFormatted;
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,667 @@
+{% extends "base.html" %}
+
+{% block title %}{{ tontine.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        height: 400px;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        overflow-y: auto;
+    }
+    .chat-message {
+        padding: 0.5rem 1rem;
+        margin: 0.5rem;
+        border-radius: 1rem;
+        max-width: 75%;
+    }
+    .message-sent {
+        background-color: #0d6efd;
+        color: white;
+        margin-left: auto;
+    }
+    .message-received {
+        background-color: #f8f9fa;
+        margin-right: auto;
+    }
+    .member-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('tontines_list') }}">Tontines</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ tontine.name }}</li>
+        </ol>
+    </nav>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h2 class="mb-0">{{ tontine.name }}</h2>
+                        <div>
+                            <span class="badge bg-{{ 'success' if tontine.is_active else 'secondary' }} me-2">
+                                {{ 'Active' if tontine.is_active else 'Inactive' }}
+                            </span>
+                            {% if is_creator or current_user.admin %}
+                            <div class="dropdown d-inline-block">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="tontineActions" data-bs-toggle="dropdown">
+                                    <i class="bi bi-gear"></i>
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="tontineActions">
+                                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editTontineModal">
+                                        <i class="bi bi-pencil me-2"></i>Modifier
+                                    </a></li>
+                                    {% if tontine.is_active %}
+                                    <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#closeTontineModal">
+                                        <i class="bi bi-lock me-2"></i>Clôturer
+                                    </a></li>
+                                    {% else %}
+                                    <li><a class="dropdown-item text-success" href="#" data-bs-toggle="modal" data-bs-target="#reopenTontineModal">
+                                        <i class="bi bi-unlock me-2"></i>Réouvrir
+                                    </a></li>
+                                    {% endif %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#addMemberModal">
+                                        <i class="bi bi-person-plus me-2"></i>Ajouter membre
+                                    </a></li>
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <p class="lead">{{ tontine.description }}</p>
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-muted">Cotisation</h6>
+                                    <h4 class="card-title">{{ tontine.amount_per_member|format_currency }} XOF</h4>
+                                    <p class="card-text small text-muted">{{ tontine.frequency|capitalize }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-muted">Membres</h6>
+                                    <h4 class="card-title">{{ members_count }} / {{ tontine.max_members }}</h4>
+                                    <p class="card-text small text-muted">
+                                        {% set places = tontine.max_members - members_count %}
+                                        {% if places > 0 %}
+                                            {{ places }} place{{ 's' if places > 1 else '' }} disponible{{ 's' if places > 1 else '' }}
+                                        {% else %}
+                                            Complet
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if not is_member and tontine.is_active and tontine.max_members > members_count %}
+                    <div class="d-grid">
+                        <a href="{{ url_for('tontine_join', tontine_id=tontine.id) }}" class="btn btn-primary py-2">
+                            Rejoindre cette tontine
+                        </a>
+                    </div>
+                    {% elif is_member %}
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        Vous êtes membre de cette tontine
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Section Membres -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Membres</h5>
+                    <span class="badge bg-primary rounded-pill">{{ memberships|length }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for membership in memberships %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <img src="{{ url_for('static', filename='images/default-avatar.png') }}" 
+                                     class="member-avatar me-3" alt="{{ membership.user.username }}">
+                                <div>
+                                    <h6 class="mb-0">{{ membership.user.username }}</h6>
+                                    <small class="text-muted">
+                                        Rejoint le {{ membership.joined_at|format_date('short') }}
+                                        {% if membership.user_id == tontine.creator_id %}
+                                        <span class="badge bg-info ms-2">Créateur</span>
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                            <div>
+                                {% if is_creator and membership.user_id != current_user.id %}
+                                <button class="btn btn-sm btn-outline-danger" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#removeMemberModal"
+                                        data-user-id="{{ membership.user.id }}"
+                                        data-username="{{ membership.user.username }}">
+                                    <i class="bi bi-person-x"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Section Cycles -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">Cycles de tontine</h5>
+                </div>
+                <div class="card-body">
+                    {% if cycles %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Période</th>
+                                    <th>Bénéficiaire</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cycle in cycles %}
+                                <tr>
+                                    <td>
+                                        {{ cycle.start_date|format_date('short') }} - {{ cycle.end_date|format_date('short') }}
+                                    </td>
+                                    <td>
+                                        {% if cycle.beneficiary_id %}
+                                            {% if cycle.beneficiary_id == current_user.id %}
+                                                <span class="badge bg-success">Vous</span>
+                                            {% else %}
+                                                {{ beneficiaries.get(cycle.beneficiary_id).username if beneficiaries.get(cycle.beneficiary_id) else 'Inconnu' }}
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">À déterminer</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if cycle.is_completed else 'warning' }}">
+                                            {{ 'Terminé' if cycle.is_completed else 'En cours' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if is_creator and not cycle.is_completed and cycle.end_date < datetime.utcnow() %}
+                                        <button class="btn btn-sm btn-success" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#selectBeneficiaryModal"
+                                                data-cycle-id="{{ cycle.id }}">
+                                            <i class="bi bi-award"></i> Choisir bénéficiaire
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-calendar fs-1 text-muted"></i>
+                        <p class="mt-2">Aucun cycle pour le moment</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if is_creator and tontine.is_active %}
+                    <div class="d-grid mt-3">
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newCycleModal">
+                            <i class="bi bi-plus-circle me-2"></i>Créer un nouveau cycle
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Section Créateur -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Créateur</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <img src="{{ url_for('static', filename='images/default-avatar.png') }}" 
+                             class="member-avatar me-3" alt="{{ creator.username }}">
+                        <div>
+                            <h6 class="mb-0">{{ creator.username }}</h6>
+                            <small class="text-muted">Créé le {{ tontine.created_at|format_date('short') }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Section Règles -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Règles</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <span>Cotisation de {{ tontine.amount_per_member|format_currency }} XOF {{ tontine.frequency }}</span>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <span>Maximum {{ tontine.max_members }} membre{{ 's' if tontine.max_members > 1 else '' }}</span>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <span>Bénéficiaire choisi par tirage au sort</span>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <span>Paiements traçables et sécurisés</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Section Chat -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">Discussion</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div id="chat-container" class="chat-container p-3"></div>
+                    <div class="p-3 border-top">
+                        <div class="input-group">
+                            <input type="text" id="message-input" class="form-control" placeholder="Votre message...">
+                            <button class="btn btn-primary" id="send-button">
+                                <i class="bi bi-send"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+{% if is_creator or current_user.admin %}
+<!-- Modal Ajouter Membre -->
+<div class="modal fade" id="addMemberModal" tabindex="-1" aria-labelledby="addMemberModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addMemberModalLabel">Ajouter un membre</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_member', tontine_id=tontine.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Nom d'utilisateur</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                        <div class="form-text">Entrez le nom d'utilisateur de la personne à ajouter</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Supprimer Membre -->
+<div class="modal fade" id="removeMemberModal" tabindex="-1" aria-labelledby="removeMemberModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="removeMemberModalLabel">Retirer un membre</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('remove_member', tontine_id=tontine.id) }}">
+                <input type="hidden" id="remove-user-id" name="user_id">
+                <div class="modal-body">
+                    <p>Êtes-vous sûr de vouloir retirer <span id="remove-username" class="fw-bold"></span> de cette tontine ?</p>
+                    <p class="text-danger">Cette action est irréversible.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger">Confirmer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modifier Tontine -->
+<div class="modal fade" id="editTontineModal" tabindex="-1" aria-labelledby="editTontineModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editTontineModalLabel">Modifier la tontine</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('edit_tontine', tontine_id=tontine.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit-name" class="form-label">Nom</label>
+                        <input type="text" class="form-control" id="edit-name" name="name" value="{{ tontine.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-description" class="form-label">Description</label>
+                        <textarea class="form-control" id="edit-description" name="description" rows="3">{{ tontine.description }}</textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-amount" class="form-label">Montant par membre (XOF)</label>
+                            <input type="number" class="form-control" id="edit-amount" name="amount" 
+                                   value="{{ tontine.amount_per_member }}" min="100" step="100" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-frequency" class="form-label">Fréquence</label>
+                            <select class="form-select" id="edit-frequency" name="frequency" required>
+                                <option value="daily" {% if tontine.frequency == 'daily' %}selected{% endif %}>Quotidienne</option>
+                                <option value="weekly" {% if tontine.frequency == 'weekly' %}selected{% endif %}>Hebdomadaire</option>
+                                <option value="monthly" {% if tontine.frequency == 'monthly' %}selected{% endif %}>Mensuelle</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-max-members" class="form-label">Nombre maximum de membres</label>
+                        <input type="number" class="form-control" id="edit-max-members" name="max_members" 
+                               value="{{ tontine.max_members }}" min="{{ members_count }}" required>
+                        <div class="form-text">Ne peut pas être inférieur au nombre actuel de membres ({{ members_count }})</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Clôturer Tontine -->
+<div class="modal fade" id="closeTontineModal" tabindex="-1" aria-labelledby="closeTontineModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="closeTontineModalLabel">Clôturer la tontine</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('close_tontine', tontine_id=tontine.id) }}">
+                <div class="modal-body">
+                    <p>Êtes-vous sûr de vouloir clôturer cette tontine ?</p>
+                    <p class="text-danger">Les membres ne pourront plus rejoindre la tontine, mais les cycles en cours seront terminés.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger">Confirmer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Réouvrir Tontine -->
+<div class="modal fade" id="reopenTontineModal" tabindex="-1" aria-labelledby="reopenTontineModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reopenTontineModalLabel">Réouvrir la tontine</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('reopen_tontine', tontine_id=tontine.id) }}">
+                <div class="modal-body">
+                    <p>Êtes-vous sûr de vouloir réouvrir cette tontine ?</p>
+                    <p class="text-success">Les membres pourront à nouveau rejoindre la tontine.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-success">Confirmer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nouveau Cycle -->
+<div class="modal fade" id="newCycleModal" tabindex="-1" aria-labelledby="newCycleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newCycleModalLabel">Créer un nouveau cycle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('create_cycle', tontine_id=tontine.id) }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="start-date" class="form-label">Date de début</label>
+                            <input type="date" class="form-control" id="start-date" name="start_date" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="end-date" class="form-label">Date de fin</label>
+                            <input type="date" class="form-control" id="end-date" name="end_date" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="auto-select" name="auto_select">
+                            <label class="form-check-label" for="auto-select">
+                                Sélectionner automatiquement le bénéficiaire à la fin du cycle
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Créer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Choisir Bénéficiaire -->
+<div class="modal fade" id="selectBeneficiaryModal" tabindex="-1" aria-labelledby="selectBeneficiaryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="selectBeneficiaryModalLabel">Choisir le bénéficiaire</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('select_beneficiary') }}">
+                <input type="hidden" id="cycle-id" name="cycle_id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Sélectionnez le bénéficiaire :</label>
+                        <div class="list-group">
+                            {% for membership in memberships %}
+                            <label class="list-group-item">
+                                <input class="form-check-input me-2" type="radio" name="beneficiary_id" 
+                                       value="{{ membership.user.id }}" required>
+                                {{ membership.user.username }}
+                                {% if membership.user_id == tontine.creator_id %}
+                                <span class="badge bg-info ms-2">Créateur</span>
+                                {% endif %}
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="amount-received" class="form-label">Montant reçu (XOF)</label>
+                        <input type="number" class="form-control" id="amount-received" name="amount_received" 
+                               value="{{ tontine.amount_per_member * members_count }}" min="0" step="100" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Confirmer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+    // Gestion des modals
+    document.addEventListener('DOMContentLoaded', function() {
+        // Modal Supprimer Membre
+        const removeMemberModal = document.getElementById('removeMemberModal');
+        if (removeMemberModal) {
+            removeMemberModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const userId = button.getAttribute('data-user-id');
+                const username = button.getAttribute('data-username');
+                
+                document.getElementById('remove-user-id').value = userId;
+                document.getElementById('remove-username').textContent = username;
+            });
+        }
+        
+        // Modal Choisir Bénéficiaire
+        const selectBeneficiaryModal = document.getElementById('selectBeneficiaryModal');
+        if (selectBeneficiaryModal) {
+            selectBeneficiaryModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const cycleId = button.getAttribute('data-cycle-id');
+                document.getElementById('cycle-id').value = cycleId;
+            });
+        }
+        
+        // Chat
+        const socket = io();
+        const room = "tontine_{{ tontine.id }}";
+        
+        // Rejoindre la room
+        socket.emit('join', { 
+            room: room,
+            username: "{{ current_user.username }}"
+        });
+        
+        // Recevoir les messages
+        socket.on('message', function(data) {
+            const chatContainer = document.getElementById('chat-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('chat-message');
+            
+            if (data.sender === "{{ current_user.username }}") {
+                messageDiv.classList.add('message-sent');
+                messageDiv.innerHTML = `
+                    <div class="d-flex justify-content-end">
+                        <div>
+                            <strong>Vous</strong>
+                            <small class="ms-2">${new Date(data.timestamp).toLocaleTimeString()}</small>
+                            <div>${data.message}</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                messageDiv.classList.add('message-received');
+                messageDiv.innerHTML = `
+                    <div class="d-flex">
+                        <div>
+                            <strong>${data.sender}</strong>
+                            <small class="ms-2">${new Date(data.timestamp).toLocaleTimeString()}</small>
+                            <div>${data.message}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        });
+        
+        // Envoyer un message
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message) {
+                socket.emit('message', {
+                    room: room,
+                    message: message,
+                    sender: "{{ current_user.username }}",
+                    timestamp: new Date().toISOString()
+                });
+                messageInput.value = '';
+            }
+        }
+        
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        // Charger l'historique du chat
+        fetch("{{ url_for('get_chat_history', tontine_id=tontine.id) }}")
+            .then(response => response.json())
+            .then(messages => {
+                const chatContainer = document.getElementById('chat-container');
+                messages.forEach(data => {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.classList.add('chat-message');
+                    
+                    if (data.sender === "{{ current_user.username }}") {
+                        messageDiv.classList.add('message-sent');
+                        messageDiv.innerHTML = `
+                            <div class="d-flex justify-content-end">
+                                <div>
+                                    <strong>Vous</strong>
+                                    <small class="ms-2">${new Date(data.timestamp).toLocaleTimeString()}</small>
+                                    <div>${data.message}</div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        messageDiv.classList.add('message-received');
+                        messageDiv.innerHTML = `
+                            <div class="d-flex">
+                                <div>
+                                    <strong>${data.sender}</strong>
+                                    <small class="ms-2">${new Date(data.timestamp).toLocaleTimeString()}</small>
+                                    <div>${data.message}</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    chatContainer.appendChild(messageDiv);
+                });
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            });
+    });
+</script>
+{% endblock %}

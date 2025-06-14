@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Tontines disponibles{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-5 fw-bold mb-0">Rechercher une Tontine</h1>
+        <a href="{{ url_for('tontine_create') }}" class="btn btn-primary btn-lg">
+            <i class="bi bi-plus-circle me-2"></i>Créer une tontine
+        </a>
+    </div>
+
+    <!-- Barre de recherche -->
+    <div class="card shadow-sm mb-5">
+        <div class="card-body p-4">
+            <form method="get" action="{{ url_for('tontines_list') }}" class="row g-3 align-items-center">
+                <div class="col-md-9">
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input type="text" 
+                               class="form-control border-start-0" 
+                               name="q" 
+                               value="{{ search_query }}"
+                               placeholder="Entrez le nom exact de la tontine..." 
+                               required>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        Rechercher
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Résultats de recherche -->
+    {% if search_query %}
+    <div class="row">
+        <div class="col-12">
+            <h4 class="mb-4">Résultats pour "{{ search_query }}"</h4>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        {% if tontines %}
+            {% for tontine in tontines %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-lg rounded-4 overflow-hidden">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h5 class="card-title mb-0">{{ tontine.name }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text text-muted mb-4">{{ tontine.description|truncate(150) }}</p>
+                        
+                        <div class="d-flex flex-column gap-3 mb-4">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Cotisation:</span>
+                                <strong class="text-primary">{{ tontine.amount_per_member|format_currency }} XOF</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Fréquence:</span>
+                                <strong>{{ tontine.frequency|capitalize }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Membres:</span>
+                                <strong>{{ tontine.members|length }} / {{ tontine.max_members }}</strong>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            {% if tontine.id in pending_request_ids %}
+                                <button class="btn btn-warning rounded-pill" disabled>
+                                    <i class="bi bi-hourglass-split me-2"></i>Demande en attente
+                                </button>
+                            {% elif tontine.id in user_tontine_ids %}
+                                <a href="{{ url_for('tontine_detail', tontine_id=tontine.id) }}" 
+                                   class="btn btn-success rounded-pill">
+                                    <i class="bi bi-check-circle me-2"></i>Vous êtes membre
+                                </a>
+                            {% else %}
+                                <form method="post" action="{{ url_for('tontine_join_request', tontine_id=tontine.id) }}">
+                                    <button type="submit" class="btn btn-primary rounded-pill w-100">
+                                        <i class="bi bi-send-check me-2"></i>Demander à rejoindre
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+
+                        <!-- Annuler la demande si en attente -->
+                        {% if tontine.id in pending_request_ids %}
+                        <div class="mt-2">
+                            <form method="post" action="{{ url_for('cancel_join_request', tontine_id=tontine.id) }}">
+                                <button type="submit" class="btn btn-warning btn-sm">
+                                    <i class="bi bi-x-circle"></i> Annuler la demande
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer bg-light">
+                        <small class="text-muted">
+                            Créée par {{ tontine.creator.username }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="card shadow-sm border-0 rounded-4">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-search display-1 text-muted opacity-25 mb-4"></i>
+                        <h3 class="mb-3">Aucune tontine trouvée</h3>
+                        <p class="text-muted mb-4">
+                            Aucune tontine ne correspond à "{{ search_query }}"
+                        </p>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <!-- Aucune recherche effectuée -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-people display-1 text-muted opacity-25 mb-4"></i>
+                    <h3 class="mb-3">Recherchez une tontine</h3>
+                    <p class="text-muted mb-4">
+                        Entrez le nom exact de la tontine que vous souhaitez rejoindre
+                    </p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{{ url_for('tontine_create') }}" class="btn btn-primary btn-lg">
+                            <i class="bi bi-plus-circle me-2"></i>Créer une tontine
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

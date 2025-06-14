@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section Modern -->
+<section class="hero-section bg-gradient-primary text-white py-5">
+    <div class="container py-5">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4 animate__animated animate__fadeInDown">Gestion de tontines 2.0</h1>
+                <p class="lead mb-4 animate__animated animate__fadeIn animate__delay-1s">La plateforme ultime pour gérer vos tontines et collectes en toute transparence.</p>
+                <div class="d-flex gap-3 animate__animated animate__fadeIn animate__delay-2s">
+                    {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-lg px-4 rounded-pill shadow">
+                            <i class="bi bi-speedometer2 me-2"></i>Tableau de bord
+                        </a>
+                        <a href="{{ url_for('tontine_create') }}" class="btn btn-outline-light btn-lg px-4 rounded-pill">
+                            <i class="bi bi-plus-circle me-2"></i>Créer
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="btn btn-light btn-lg px-4 rounded-pill shadow">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Se connecter
+                        </a>
+                        <a href="{{ url_for('register') }}" class="btn btn-outline-light btn-lg px-4 rounded-pill">
+                            <i class="bi bi-person-plus me-2"></i>S'inscrire
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6 d-none d-lg-block animate__animated animate__fadeIn">
+                <img src="{{ url_for('static', filename='images/finance-app.jpg') }}" alt="Finance App" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</section>
+
+{% if current_user.is_authenticated %}
+<!-- Dashboard Section for Connected Users -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Votre activité récente</h2>
+            <p class="text-muted">Gérez vos tontines et collectes en cours</p>
+        </div>
+
+        <div class="row g-4">
+            <!-- Tontines Card -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-0 py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-people-fill text-primary me-2"></i> Vos tontines</h5>
+                            <a href="{{ url_for('tontines_list') }}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if user_tontines %}
+                            <div class="list-group list-group-flush">
+                                {% for tontine in user_tontines %}
+                                <a href="{{ url_for('tontine_detail', tontine_id=tontine.id) }}" 
+                                   class="list-group-item list-group-item-action border-0 py-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ tontine.name }}</h6>
+                                            <small class="text-muted">
+                                                <span class="badge bg-primary-light text-primary">{{ tontine.current_members }} membres</span>
+                                                <span class="ms-2">{{ tontine.amount_per_member|format_currency }} XOF/membre</span>
+                                            </small>
+                                        </div>
+                                        <span class="badge bg-primary rounded-pill">
+                                            {{ tontine.contributions|sum(attribute='amount')|format_currency }} XOF
+                                        </span>
+                                    </div>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <img src="{{ url_for('static', filename='images/empty-tontine.svg') }}" alt="No tontine" class="img-fluid mb-3" style="max-height: 150px;">
+                                <h5 class="text-muted">Aucune tontine active</h5>
+                                <p class="text-muted mb-4">Rejoignez ou créez une tontine pour commencer</p>
+                                <a href="{{ url_for('tontine_create') }}" class="btn btn-primary rounded-pill px-4">
+                                    <i class="bi bi-plus-circle me-2"></i>Créer une tontine
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Campaigns Card -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-0 py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-collection text-primary me-2"></i> Vos collectes</h5>
+                            <a href="{{ url_for('campaigns_list') }}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if user_campaigns %}
+                            <div class="list-group list-group-flush">
+                                {% for campaign in user_campaigns %}
+                                <a href="{{ url_for('campaign_detail', campaign_id=campaign.id) }}" 
+                                   class="list-group-item list-group-item-action border-0 py-3">
+                                    <div class="d-flex align-items-center">
+                                        {% if campaign.image_url %}
+                                        <img src="{{ campaign.image_url }}" class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                                        {% endif %}
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">{{ campaign.title }}</h6>
+                                            <div class="progress mb-1" style="height: 6px;">
+                                                <div class="progress-bar bg-success" 
+                                                     style="width: {{ (campaign.current_amount / campaign.target_amount * 100)|round(1) if campaign.target_amount > 0 else 0 }}%">
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">
+                                                {{ campaign.current_amount|format_currency }} XOF collectés sur {{ campaign.target_amount|format_currency }} XOF
+                                            </small>
+                                        </div>
+                                    </div>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <img src="{{ url_for('static', filename='images/empty-campaign.svg') }}" alt="No campaign" class="img-fluid mb-3" style="max-height: 150px;">
+                                <h5 class="text-muted">Aucune collecte active</h5>
+                                <p class="text-muted mb-4">Créez une campagne pour commencer à collecter des fonds</p>
+                                <a href="{{ url_for('campaign_create') }}" class="btn btn-primary rounded-pill px-4">
+                                    <i class="bi bi-plus-circle me-2"></i>Lancer une collecte
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% else %}
+<!-- Public Section for Disconnected Users -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Découvrez nos fonctionnalités</h2>
+            <p class="text-muted">Rejoignez la communauté et gérez vos finances ensemble</p>
+        </div>
+
+        <div class="row g-4">
+            <!-- Public Tontines -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0"><i class="bi bi-people-fill text-primary me-2"></i> Tontines populaires</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if tontines %}
+                            <div class="list-group list-group-flush">
+                                {% for tontine in tontines %}
+                                <div class="list-group-item border-0 py-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ tontine.name }}</h6>
+                                            <small class="text-muted">
+                                                <span class="badge bg-primary-light text-primary">{{ tontine.current_members }} membres</span>
+                                                <span class="ms-2">{{ tontine.amount_per_member|format_currency }} XOF/membre</span>
+                                            </small>
+                                        </div>
+                                        <a href="{{ url_for('tontine_detail', tontine_id=tontine.id) }}" class="btn btn-sm btn-outline-primary">
+                                            Voir
+                                        </a>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div class="text-center mt-3">
+                                <a href="{{ url_for('tontines_list') }}" class="btn btn-primary rounded-pill px-4">
+                                    Voir toutes les tontines
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <img src="{{ url_for('static', filename='images/empty-tontine.svg') }}" alt="No tontine" class="img-fluid mb-3" style="max-height: 150px;">
+                                <h5 class="text-muted">Aucune tontine disponible</h5>
+                                <p class="text-muted">Rejoignez-nous pour créer la première !</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Public Campaigns -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0"><i class="bi bi-heart-fill text-primary me-2"></i> Collectes en cours</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if campaigns %}
+                            <div class="list-group list-group-flush">
+                                {% for campaign in campaigns %}
+                                <div class="list-group-item border-0 py-3">
+                                    <div class="d-flex align-items-center">
+                                        {% if campaign.image_url %}
+                                        <img src="{{ campaign.image_url }}" class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                                        {% endif %}
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">{{ campaign.title }}</h6>
+                                            <div class="progress mb-1" style="height: 6px;">
+                                                <div class="progress-bar bg-success" 
+                                                     style="width: {{ (campaign.current_amount / campaign.target_amount * 100)|round(1) if campaign.target_amount > 0 else 0 }}%">
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">
+                                                {{ campaign.current_amount|format_currency }} XOF collectés sur {{ campaign.target_amount|format_currency }} XOF
+                                            </small>
+                                        </div>
+                                        <a href="{{ url_for('campaign_detail', campaign_id=campaign.id) }}" class="btn btn-sm btn-outline-primary ms-3">
+                                            Contribuer
+                                        </a>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div class="text-center mt-3">
+                                <a href="{{ url_for('campaigns_list') }}" class="btn btn-primary rounded-pill px-4">
+                                    Voir toutes les collectes
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <img src="{{ url_for('static', filename='images/empty-campaign.svg') }}" alt="No campaign" class="img-fluid mb-3" style="max-height: 150px;">
+                                <h5 class="text-muted">Aucune collecte en cours</h5>
+                                <p class="text-muted">Soyez le premier à lancer une collecte !</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Features Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Pourquoi choisir notre plateforme ?</h2>
+            <p class="text-muted">Une expérience complète et sécurisée</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-lg bg-primary-light text-primary rounded-circle mb-4 mx-auto">
+                            <i class="bi bi-shield-lock fs-3"></i>
+                        </div>
+                        <h5>Sécurité maximale</h5>
+                        <p class="text-muted">Toutes vos transactions sont chiffrées et protégées.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-lg bg-primary-light text-primary rounded-circle mb-4 mx-auto">
+                            <i class="bi bi-graph-up-arrow fs-3"></i>
+                        </div>
+                        <h5>Transparence totale</h5>
+                        <p class="text-muted">Suivez chaque contribution en temps réel.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-lg bg-primary-light text-primary rounded-circle mb-4 mx-auto">
+                            <i class="bi bi-phone fs-3"></i>
+                        </div>
+                        <h5>Accès mobile</h5>
+                        <p class="text-muted">Gérez vos tontines depuis n'importe où.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Final CTA Section -->
+<section class="py-5">
+    <div class="container text-center">
+        <h2 class="fw-bold mb-3">
+            {% if current_user.is_authenticated %}
+            Besoin d'aide ?
+            {% else %}
+            Prêt à nous rejoindre ?
+            {% endif %}
+        </h2>
+        <p class="lead text-muted mb-4">
+            {% if current_user.is_authenticated %}
+            Notre équipe est là pour vous accompagner dans la gestion de vos tontines.
+            {% else %}
+            Rejoignez des milliers de personnes qui gèrent leurs finances en communauté.
+            {% endif %}
+        </p>
+        {% if current_user.is_authenticated %}
+            <a href="{{ url_for('contact') }}" class="btn btn-primary btn-lg px-4 rounded-pill">
+                <i class="bi bi-headset me-2"></i>Contactez-nous
+            </a>
+        {% else %}
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg px-4 rounded-pill">
+                    <i class="bi bi-person-plus me-2"></i>Créer un compte
+                </a>
+                <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg px-4 rounded-pill">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Se connecter
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section Modern -->
+<section class="hero-section bg-gradient-primary text-white py-5">
+    <div class="container py-5">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">Bonjour, {{ user.first_name }}!</h1>
+                <p class="lead mb-4">Bienvenue sur votre espace personnel de gestion de tontines.</p>
+                <div class="d-flex gap-3">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-lg px-4 rounded-pill shadow">
+                        <i class="bi bi-speedometer2 me-2"></i>Tableau de bord
+                    </a>
+                    <a href="{{ url_for('tontine_create') }}" class="btn btn-outline-light btn-lg px-4 rounded-pill">
+                        <i class="bi bi-plus-circle me-2"></i>Créer
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6 d-none d-lg-block">
+                <img src="{{ url_for('static', filename='images/dashboard-app.jpg') }}" alt="Dashboard" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</section>
+
+{% if has_tontines %}
+<!-- Dashboard Section for Connected Users -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Votre activité récente</h2>
+            <p class="text-muted">Gérez vos tontines et collectes en cours</p>
+        </div>
+
+        <div class="row g-4">
+            <!-- Tontines Card -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-0 py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-people-fill text-primary me-2"></i> Vos tontines</h5>
+                            <a href="{{ url_for('tontines_list') }}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if user_tontines %}
+                            <div class="list-group list-group-flush">
+                                {% for tontine in user_tontines %}
+                                <a href="{{ url_for('tontine_detail', tontine_id=tontine.id) }}" 
+                                   class="list-group-item list-group-item-action border-0 py-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ tontine.name }}</h6>
+                                            <small class="text-muted">
+                                                <span class="badge bg-primary-light text-primary">{{ tontine.current_members }} membres</span>
+                                                <span class="ms-2">{{ tontine.amount_per_member|format_currency }} XOF/membre</span>
+                                            </small>
+                                        </div>
+                                        <span class="badge bg-primary rounded-pill">
+                                            {{ tontine.contributions|sum(attribute='amount')|format_currency }} XOF
+                                        </span>
+                                    </div>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transactions Card -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-0 py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-wallet2 text-primary me-2"></i> Dernières transactions</h5>
+                            <a href="{{ url_for('wallet') }}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if transactions %}
+                            <div class="list-group list-group-flush">
+                                {% for transaction in transactions %}
+                                <div class="list-group-item border-0 py-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ transaction.description }}</h6>
+                                            <small class="text-muted">{{ transaction.created_at|format_datetime }}</small>
+                                        </div>
+                                        <span class="badge rounded-pill bg-{% if transaction.transaction_type == 'deposit' %}success{% else %}warning{% endif %}">
+                                            {{ transaction.amount|format_currency }} XOF
+                                        </span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-3">
+                                <p class="text-muted">Aucune transaction récente</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% else %}
+<!-- New User Section -->
+<section class="py-5 bg-light">
+    <div class="container text-center">
+        <img src="{{ url_for('static', filename='images/welcome.svg') }}" alt="Welcome" class="img-fluid mb-4" style="max-height: 200px;">
+        <h2 class="fw-bold mb-3">Bienvenue dans notre communauté!</h2>
+        <p class="lead text-muted mb-4">
+            Pour commencer, rejoignez une tontine existante ou créez la vôtre.
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{{ url_for('tontines_list') }}" class="btn btn-primary btn-lg px-4 rounded-pill">
+                <i class="bi bi-people-fill me-2"></i>Voir les tontines
+            </a>
+            <a href="{{ url_for('tontine_create') }}" class="btn btn-outline-primary btn-lg px-4 rounded-pill">
+                <i class="bi bi-plus-circle me-2"></i>Créer une tontine
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Comment commencer ?</h2>
+            <p class="text-muted">Guide rapide pour vos premières étapes</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-lg bg-primary-light text-primary rounded-circle mb-4 mx-auto">
+                            <span class="fs-3">1</span>
+                        </div>
+                        <h5>Créez ou rejoignez</h5>
+                        <p class="text-muted">Démarrez une nouvelle tontine ou rejoignez-en une existante.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-lg bg-primary-light text-primary rounded-circle mb-4 mx-auto">
+                            <span class="fs-3">2</span>
+                        </div>
+                        <h5>Configurez</h5>
+                        <p class="text-muted">Définissez les règles et paramètres de votre tontine.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-lg bg-primary-light text-primary rounded-circle mb-4 mx-auto">
+                            <span class="fs-3">3</span>
+                        </div>
+                        <h5>Participez</h5>
+                        <p class="text-muted">Effectuez vos contributions et suivez les paiements.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

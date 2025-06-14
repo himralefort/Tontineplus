@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Mon Profil{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-picture-container {
+        position: relative;
+        display: inline-block;
+    }
+    .profile-picture-edit {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        background: rgba(0,0,0,0.5);
+        color: white;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+    .history-item {
+        border-left: 3px solid #0d6efd;
+        padding-left: 10px;
+        margin-bottom: 10px;
+    }
+    .history-date {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <!-- Colonne profil -->
+        <div class="col-lg-4">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="profile-picture-container mb-3">
+                        <img src="{{ profile_picture_url }}" 
+                             alt="Avatar" class="rounded-circle img-fluid" style="width: 150px; height: 150px; object-fit: cover;">
+                        <div class="profile-picture-edit" data-bs-toggle="modal" data-bs-target="#pictureModal">
+                            <i class="bi bi-camera"></i>
+                        </div>
+                    </div>
+                    <h5 class="my-3">{{ user.first_name }} {{ user.last_name }}</h5>
+                    <p class="text-muted mb-1">@{{ user.username }}</p>
+                    <p class="text-muted mb-4">{{ user.email }}</p>
+                    <div class="d-flex justify-content-center mb-2">
+                        <a href="{{ url_for('change_password') }}" class="btn btn-outline-primary me-2">
+                            Changer mot de passe
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historique -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Historique des modifications</h5>
+                    {% if history_entries %}
+                        <div class="history-list">
+                            {% for entry in history_entries %}
+                                <div class="history-item">
+                                    <div class="history-date">
+                                        {{ entry.changed_at|format_datetime('short') }}
+                                    </div>
+                                    <div>
+                                        {% if entry.changed_field == 'profile_picture' %}
+                                            Photo de profil modifiée
+                                        {% elif entry.changed_field == 'first_name' %}
+                                            Prénom changé de "{{ entry.old_value }}" à "{{ entry.new_value }}"
+                                        {% elif entry.changed_field == 'last_name' %}
+                                            Nom changé de "{{ entry.old_value }}" à "{{ entry.new_value }}"
+                                        {% elif entry.changed_field == 'email' %}
+                                            Email changé de "{{ entry.old_value }}" à "{{ entry.new_value }}"
+                                        {% elif entry.changed_field == 'phone' %}
+                                            Téléphone changé de "{{ entry.old_value }}" à "{{ entry.new_value }}"
+                                        {% elif entry.changed_field == 'password' %}
+                                            Mot de passe mis à jour
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Aucune modification enregistrée</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonne formulaire -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4 class="mb-4">Informations personnelles</h4>
+                    <form method="POST" action="{{ url_for('profile') }}" enctype="multipart/form-data">
+                        <div class="row mb-3">
+                            <div class="col-sm-6">
+                                <label for="first_name" class="form-label">Prénom</label>
+                                <input type="text" class="form-control" id="first_name" 
+                                       name="first_name" value="{{ user.first_name }}" required>
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="last_name" class="form-label">Nom</label>
+                                <input type="text" class="form-control" id="last_name" 
+                                       name="last_name" value="{{ user.last_name }}" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" 
+                                   name="email" value="{{ user.email }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Téléphone</label>
+                            <input type="tel" class="form-control" id="phone" 
+                                   name="phone" value="{{ user.phone or '' }}">
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="new_password" class="form-label">Nouveau mot de passe (laisser vide si inchangé)</label>
+                            <input type="password" class="form-control" id="new_password" name="new_password">
+                            <div class="form-text">Minimum 6 caractères</div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Statistiques -->
+            <div class="card mt-4 shadow-sm">
+                <div class="card-body">
+                    <h4 class="mb-4">Statistiques</h4>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 text-primary rounded p-2 me-3">
+                                    <i class="bi bi-people-fill fs-4"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-0 text-muted">Tontines</p>
+                                    <h5 class="mb-0">{{ user.tontines|length }}</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 text-primary rounded p-2 me-3">
+                                    <i class="bi bi-wallet2 fs-4"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-0 text-muted">Solde</p>
+                                    <h5 class="mb-0">{{ user.wallet.balance|format_currency }} XOF</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 text-primary rounded p-2 me-3">
+                                    <i class="bi bi-calendar-check fs-4"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-0 text-muted">Membre depuis</p>
+                                    <h5 class="mb-0">{{ user.created_at|format_date('short') }}</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal upload photo -->
+<div class="modal fade" id="pictureModal" tabindex="-1" aria-labelledby="pictureModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('profile') }}" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="pictureModalLabel">Changer la photo de profil</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="profile_picture" class="form-label">Sélectionner une image</label>
+                        <input class="form-control" type="file" id="profile_picture" name="profile_picture" accept="image/*">
+                        <div class="form-text">Formats acceptés : JPG, PNG, GIF. Taille max : 2MB</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

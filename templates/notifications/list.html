@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Mes Notifications{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-5 fw-bold mb-0">Mes Notifications</h1>
+        <form method="post" action="{{ url_for('clear_notifications') }}">
+            <button type="submit" class="btn btn-outline-danger">
+                <i class="bi bi-trash me-2"></i>Tout effacer
+            </button>
+        </form>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            {% if notifications %}
+            <div class="list-group list-group-flush">
+                {% for notification in notifications %}
+                <a href="#" class="list-group-item list-group-item-action {% if not notification.read %}list-group-item-primary{% endif %}">
+                    <div class="d-flex w-100 justify-content-between">
+                        <p class="mb-1">{{ notification.message }}</p>
+                        <small class="text-muted">{{ notification.created_at|time_ago }}</small>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-bell-slash display-4 text-muted opacity-25 mb-3"></i>
+                <h4>Aucune notification</h4>
+                <p class="text-muted">Vous n'avez aucune notification pour le moment</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

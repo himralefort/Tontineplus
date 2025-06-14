@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Accès refusé{% endblock %}
+
+{% block content %}
+<div class="container text-center py-5">
+    <div class="display-1 text-danger mb-4">403</div>
+    <h2 class="mb-3">Accès refusé</h2>
+    <p class="lead text-muted mb-4">Vous n'avez pas l'autorisation d'accéder à cette page.</p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary px-4">
+        <i class="bi bi-house-door me-2"></i>Retour à l'accueil
+    </a>
+</div>
+{% endblock %}

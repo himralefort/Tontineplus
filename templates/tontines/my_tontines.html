@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Mes Tontines{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-5 fw-bold mb-0">Mes Tontines</h1>
+        <a href="{{ url_for('tontine_create') }}" class="btn btn-primary btn-lg">
+            <i class="bi bi-plus-circle me-2"></i>Créer une tontine
+        </a>
+    </div>
+
+    {% if tontines %}
+    <div class="row g-4">
+        {% for tontine in tontines %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="card-header bg-primary text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">{{ tontine.name }}</h5>
+                        <span class="badge bg-white text-primary">
+                            {{ tontine.members|length }}/{{ tontine.max_members }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="card-text text-muted mb-4">{{ tontine.description|truncate(120) }}</p>
+                    
+                    <div class="d-flex flex-column gap-3 mb-4">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Prochaine cotisation:</span>
+                            <strong>{{ (tontine.next_cycle_date if tontine.next_cycle_date else 'Aucun cycle en cours')|format_date }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Montant:</span>
+                            <strong class="text-primary">{{ tontine.amount_per_member|format_currency }} XOF</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Fréquence:</span>
+                            <strong>{{ tontine.frequency|capitalize }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('tontine_detail', tontine_id=tontine.id) }}" 
+                           class="btn btn-outline-primary rounded-pill">
+                            <i class="bi bi-eye me-2"></i>Voir détails
+                        </a>
+                        
+                        {% if tontine.creator_id == current_user.id %}
+                        <a href="{{ url_for('tontine_manage', tontine_id=tontine.id) }}" 
+                           class="btn btn-outline-secondary rounded-pill">
+                            <i class="bi bi-gear me-2"></i>Gérer
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            Créée le {{ tontine.created_at|format_date }}
+                        </small>
+                        {% if tontine.is_active %}
+                        <span class="badge bg-success">Active</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Inactive</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-people display-1 text-muted opacity-25 mb-4"></i>
+            <h3 class="mb-3">Vous n'avez pas encore de tontines</h3>
+            <p class="text-muted mb-4">
+                Rejoignez une tontine existante ou créez-en une nouvelle pour commencer.
+            </p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{{ url_for('tontines_list') }}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-search me-2"></i>Rechercher
+                </a>
+                <a href="{{ url_for('tontine_create') }}" class="btn btn-outline-primary btn-lg">
+                    <i class="bi bi-plus-circle me-2"></i>Créer
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

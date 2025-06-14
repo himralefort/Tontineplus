@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    {% include 'includes/head.html' %}
+    {% block extra_css %}{% endblock %}
+    <title>{% block title %}Tontine & Collecte Moderne{% endblock %}</title>
+</head>
+<body class="d-flex flex-column min-vh-100">
+    {% include 'includes/navbar.html' %}
+
+    <main class="flex-grow-1">
+        <div class="container py-4">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    {% include 'includes/footer.html' %}
+    {% include 'includes/scripts.html' %}
+    {% block extra_js %}{% endblock %}
+
+    {% if current_user.is_authenticated %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gestion annulation demande
+            document.querySelectorAll('.cancel-request').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    if (!confirm("Annuler cette demande ?")) {
+                        e.preventDefault();
+                    }
+                });
+            });
+
+            // Socket.IO pour notifications
+            if (typeof io !== 'undefined') {
+                const socket = io('/notifications');
+                socket.on('new_notification', function(data) {
+                    if (data.user_id === {{ current_user.id|tojson }}) {
+                        updateNotificationCount();
+                        showToast(data.message);
+                    }
+                });
+            }
+
+            function updateNotificationCount() {
+                fetch('{{ url_for("notifications_count") }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        const badge = document.querySelector('.notification-badge');
+                        if (badge) {
+                            badge.textContent = data.count;
+                            badge.style.display = data.count > 0 ? 'inline-block' : 'none';
+                        }
+                    });
+            }
+
+            function showToast(message) {
+                // Remplace par un toast Bootstrap si tu veux, ici juste un alert pour test
+                alert("🔔 Nouvelle notification: " + message);
+            }
+        });
+    </script>
+    {% endif %}
+</body>
+</html>

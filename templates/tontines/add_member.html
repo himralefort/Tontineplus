@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Ajouter membre - {{ tontine.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h2>Ajouter un membre à {{ tontine.name }}</h2>
+  <form method="POST">
+    <div class="mb-3">
+      <label for="username" class="form-label">Nom d'utilisateur</label>
+      <input type="text" class="form-control" id="username" name="username" placeholder="Nom d'utilisateur du membre" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Ajouter</button>
+  </form>
+  <a href="{{ url_for('tontine_detail', tontine_id=tontine.id) }}" class="btn btn-secondary mt-3">Retour à la tontine</a>
+</div>
+{% endblock %}

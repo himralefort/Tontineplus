@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Retrait de fonds{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h4 class="mb-0">Retrait de fonds</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-primary mb-4">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <span>Solde disponible: <strong>{{ wallet.balance|format_currency }} XOF</strong></span>
+                    </div>
+                </div>
+                
+                <form method="POST" action="{{ url_for('wallet_withdraw') }}">
+                    <div class="mb-4">
+                        <label for="amount" class="form-label">Montant à retirer (XOF)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">XOF</span>
+                            <input type="number" class="form-control" id="amount" name="amount" min="100" max="{{ wallet.balance }}" step="100" required>
+                        </div>
+                        <div class="form-text">Le montant minimum est de 100 XOF</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="description" class="form-label">Description (optionnel)</label>
+                        <textarea class="form-control" id="description" name="description" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="payment_method" class="form-label">Méthode de retrait</label>
+                        <select class="form-select" id="payment_method" name="payment_method" required>
+                            <option value="" selected disabled>Sélectionnez une méthode</option>
+                            <option value="mobile_money">Mobile Money</option>
+                            <option value="bank_transfer">Virement bancaire</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4" id="mobile_money_fields" style="display: none;">
+                        <div class="mb-3">
+                            <label for="mobile_number" class="form-label">Numéro mobile</label>
+                            <input type="tel" class="form-control" id="mobile_number" name="mobile_number">
+                        </div>
+                        <div class="mb-3">
+                            <label for="mobile_provider" class="form-label">Opérateur</label>
+                            <select class="form-select" id="mobile_provider" name="mobile_provider">
+                                <option value="orange">Orange Money</option>
+                                <option value="mtn">MTN Mobile Money</option>
+                                <option value="moov">Moov Money</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4" id="bank_transfer_fields" style="display: none;">
+                        <div class="mb-3">
+                            <label for="account_number" class="form-label">Numéro de compte</label>
+                            <input type="text" class="form-control" id="account_number" name="account_number">
+                        </div>
+                        <div class="mb-3">
+                            <label for="bank_name" class="form-label">Nom de la banque</label>
+                            <input type="text" class="form-control" id="bank_name" name="bank_name">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100 py-2">Demander le retrait</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.getElementById('payment_method').addEventListener('change', function() {
+    const method = this.value;
+    document.getElementById('mobile_money_fields').style.display = 'none';
+    document.getElementById('bank_transfer_fields').style.display = 'none';
+    
+    if (method === 'mobile_money') {
+        document.getElementById('mobile_money_fields').style.display = 'block';
+    } else if (method === 'bank_transfer') {
+        document.getElementById('bank_transfer_fields').style.display = 'block';
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

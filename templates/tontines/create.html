@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Créer une tontine{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h3 class="mb-0">Créer une nouvelle tontine</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('tontine_create') }}">
+                    <div class="mb-4">
+                        <label for="name" class="form-label">Nom de la tontine *</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                        <div class="form-text">Donnez un nom clair à votre tontine (ex: "Tontine famille 2023")</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="description" class="form-label">Description *</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                        <div class="form-text">Décrivez les objectifs et règles spécifiques de votre tontine</div>
+                    </div>
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="amount" class="form-label">Montant par membre *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">XOF</span>
+                                <input type="number" class="form-control" id="amount" name="amount" min="100" step="100" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="frequency" class="form-label">Fréquence *</label>
+                            <select class="form-select" id="frequency" name="frequency" required>
+                                <option value="daily">Quotidienne</option>
+                                <option value="weekly" selected>Hebdomadaire</option>
+                                <option value="monthly">Mensuelle</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="max_members" class="form-label">Nombre maximum de membres *</label>
+                        <input type="number" class="form-control" id="max_members" name="max_members" min="2" max="50" value="10" required>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">Règles par défaut</h6>
+                        <ul class="mb-0">
+                            <li>Les membres sont ajoutés sur invitation ou demande d'adhésion</li>
+                            <li>Le bénéficiaire est choisi par tirage au sort à chaque cycle</li>
+                            <li>Les paiements sont effectués via le portefeuille électronique</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary py-2">Créer la tontine</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

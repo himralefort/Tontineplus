@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Gérer {{ tontine.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-5 fw-bold mb-0">Gérer {{ tontine.name }}</h1>
+        <a href="{{ url_for('tontine_detail', tontine_id=tontine.id) }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Retour
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Colonne Membres -->
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Membres</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        {% for member in members %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ member.user.username }}
+                            {% if tontine.creator_id != member.user_id %}
+                            <form method="post" action="{{ url_for('remove_member', tontine_id=tontine.id) }}">
+                                <input type="hidden" name="user_id" value="{{ member.user_id }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-person-dash"></i> Retirer
+                                </button>
+                            </form>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonne Demandes en attente -->
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Demandes en attente</h5>
+                </div>
+                <div class="card-body">
+                    {% if join_requests %}
+                    <ul class="list-group list-group-flush">
+                        {% for request in join_requests %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                {{ request.user.username }}
+                                <div>
+                                    <form method="post" action="{{ url_for('approve_request', tontine_id=tontine.id, request_id=request.id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-success me-1">
+                                            <i class="bi bi-check"></i> Accepter
+                                        </button>
+                                    </form>
+                                    <form method="post" action="{{ url_for('reject_join_request', request_id=request.id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="bi bi-x"></i> Refuser
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted">Aucune demande en attente</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

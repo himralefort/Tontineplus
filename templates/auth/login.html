@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Connexion{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-body p-4 p-sm-5">
+                <h2 class="card-title text-center mb-4">Connexion</h2>
+                <form method="POST" action="{{ url_for('login') }}">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Nom d'utilisateur</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Mot de passe</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="remember">
+                            <label class="form-check-label" for="remember">Se souvenir de moi</label>
+                        </div>
+                        <a href="#" class="small text-muted">Mot de passe oublié?</a>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2">Se connecter</button>
+                </form>
+                <hr class="my-4">
+                <p class="text-center text-muted mb-0">Pas encore de compte? <a href="{{ url_for('register') }}">S'inscrire</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

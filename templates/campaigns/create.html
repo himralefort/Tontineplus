@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Créer une collecte{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h3 class="mb-0">Créer une nouvelle collecte</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('campaign_create') }}" enctype="multipart/form-data">
+                    <div class="mb-4">
+                        <label for="title" class="form-label">Titre de la collecte *</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                        <div class="form-text">Donnez un titre clair et attractif à votre collecte</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="description" class="form-label">Description *</label>
+                        <textarea class="form-control" id="description" name="description" rows="5" required></textarea>
+                        <div class="form-text">Expliquez en détail l'objectif de la collecte et comment les fonds seront utilisés</div>
+                    </div>
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="target_amount" class="form-label">Montant cible (XOF) *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">XOF</span>
+                                <input type="number" class="form-control" id="target_amount" name="target_amount" min="1000" step="1000" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="end_date" class="form-label">Date limite (optionnel)</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="image" class="form-label">Image (optionnel)</label>
+                        <input class="form-control" type="file" id="image" name="image" accept="image/*">
+                        <div class="form-text">Une image attractive augmente les chances de réussite de votre collecte</div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">Conseils pour une bonne collecte</h6>
+                        <ul class="mb-0">
+                            <li>Soyez transparent sur l'utilisation des fonds</li>
+                            <li>Fixez un objectif réaliste</li>
+                            <li>Partagez régulièrement des mises à jour</li>
+                            <li>Remerciez vos donateurs</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary py-2">Lancer la collecte</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

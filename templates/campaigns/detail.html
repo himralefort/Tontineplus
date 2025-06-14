@@ -1,0 +1,417 @@
+{% extends "base.html" %}
+
+{% block title %}{{ campaign.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #6366f1;
+        --primary-hover: #4f46e5;
+        --secondary-color: #8b5cf6;
+        --success-color: #10b981;
+        --danger-color: #ef4444;
+        --warning-color: #f59e0b;
+        --info-color: #3b82f6;
+        --dark-color: #1e293b;
+        --light-color: #f8fafc;
+        --glass-blur: 12px;
+        --transition-speed: 0.3s;
+        --total-collected-color: #8b5cf6;
+    }
+
+    /* Base Styles */
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+        color: var(--dark-color);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        min-height: 100vh;
+    }
+
+    /* Glassmorphism Effect */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(var(--glass-blur));
+        -webkit-backdrop-filter: blur(var(--glass-blur));
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+        transition: all var(--transition-speed) ease;
+    }
+
+    .glass-card:hover {
+        box-shadow: 0 12px 48px rgba(0, 0, 0, 0.1);
+        transform: translateY(-5px);
+    }
+
+    /* Total Collected Highlight - ULTRA MODERNE */
+    .total-collected-highlight {
+        background: linear-gradient(135deg, var(--total-collected-color) 0%, #6d28d9 100%);
+        color: white;
+        border-radius: 16px;
+        padding: 25px;
+        margin: 25px 0;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        animation: pulse-glow 2s infinite alternate;
+        text-align: center;
+    }
+
+    .total-collected-highlight::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+        transform: rotate(30deg);
+        z-index: 0;
+    }
+
+    .total-collected-highlight .title {
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 8px;
+        opacity: 0.9;
+        font-weight: 600;
+        position: relative;
+        z-index: 1;
+    }
+
+    .total-collected-highlight .amount {
+        font-size: 2.8rem;
+        font-weight: 800;
+        line-height: 1;
+        margin: 15px 0;
+        position: relative;
+        z-index: 1;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .total-collected-highlight .progress-indicator {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 100px;
+        padding: 8px 15px;
+        display: inline-flex;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+        backdrop-filter: blur(5px);
+    }
+
+    @keyframes pulse-glow {
+        0% {
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+            transform: scale(1);
+        }
+        100% {
+            box-shadow: 0 0 40px rgba(139, 92, 246, 0.6);
+            transform: scale(1.01);
+        }
+    }
+
+    /* Campaign Image */
+    .campaign-image {
+        height: 400px;
+        object-fit: cover;
+        border-radius: 16px 16px 0 0;
+        width: 100%;
+    }
+
+    /* Progress Bar Modern */
+    .progress-modern {
+        height: 10px;
+        border-radius: 100px;
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .progress-modern .progress-bar {
+        border-radius: 100px;
+        background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        transition: width 1s ease-in-out;
+    }
+
+    /* Stats Cards */
+    .stats-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        transition: all var(--transition-speed) ease;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Donation List */
+    .donation-item {
+        border-radius: 12px;
+        margin-bottom: 12px;
+        border: none;
+        transition: all var(--transition-speed) ease;
+        background: rgba(255, 255, 255, 0.7);
+    }
+
+    .donation-item:hover {
+        background: rgba(255, 255, 255, 0.9);
+        transform: translateX(5px);
+    }
+
+    /* Buttons */
+    .btn-neon {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 12px 24px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px -5px rgba(99, 102, 241, 0.4);
+        transition: all var(--transition-speed) ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-neon:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px -5px rgba(99, 102, 241, 0.6);
+        color: white;
+    }
+
+    .btn-neon::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: all 0.6s ease;
+    }
+
+    .btn-neon:hover::before {
+        left: 100%;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .total-collected-highlight .amount {
+            font-size: 2.2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="{{ url_for('campaigns_list') }}" class="text-decoration-none">Collectes</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ campaign.title }}</li>
+        </ol>
+    </nav>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="glass-card mb-4 overflow-hidden">
+                {% if campaign.image_url %}
+                <img src="{{ campaign.image_url }}" class="campaign-image" alt="{{ campaign.title }}">
+                {% endif %}
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h2 class="mb-0">{{ campaign.title }}</h2>
+                        <span class="badge bg-{% if campaign.is_active %}success{% else %}secondary{% endif %} rounded-pill">
+                            {{ 'Active' if campaign.is_active else 'Terminée' }}
+                        </span>
+                    </div>
+                    
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+                        <div class="mb-2">
+                            <span class="text-muted">Créée par</span>
+                            <strong>{{ creator.username }}</strong>
+                        </div>
+                        <div class="mb-2 text-end">
+                            <span class="text-muted">Date limite</span>
+                            <strong>{{ campaign.end_date|format_date if campaign.end_date else 'Aucune' }}</strong>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bar Modern -->
+                    <div class="progress progress-modern mb-4">
+                        <div class="progress-bar" role="progressbar" 
+                             style="width: {{ progress }}%" aria-valuenow="{{ progress }}" 
+                             aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                    
+                    <!-- TOTAL COLLECTED HIGHLIGHT - ULTRA MODERNE -->
+                    <div class="total-collected-highlight">
+                        <div class="title">Total Collecté</div>
+                        <div class="amount">{{ campaign.current_amount|format_currency }} XOF</div>
+                        <div class="progress-indicator">
+                            <i class="bi bi-arrow-up-circle-fill me-2"></i>
+                            {{ progress|round(1) }}% de l'objectif atteint
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5 class="mb-3">Description</h5>
+                        <div class="campaign-description">
+                            {{ campaign.description|safe }}
+                        </div>
+                    </div>
+                    
+                    {% if campaign.is_active %}
+                    <div class="d-grid">
+                        <a href="{{ url_for('campaign_donate', campaign_id=campaign.id) }}" class="btn btn-neon py-3">
+                            <i class="bi bi-heart-fill me-2"></i>Faire un don
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-secondary d-flex align-items-center">
+                        <i class="bi bi-info-circle-fill me-2 fs-4"></i>
+                        <div>
+                            <h6 class="mb-0">Cette collecte est terminée</h6>
+                            <small>Merci à tous les donateurs !</small>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Dons récents - Style moderne -->
+            <div class="glass-card">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">Dons récents</h5>
+                </div>
+                <div class="card-body">
+                    {% if donations %}
+                    <div class="list-group">
+                        {% for donation in donations %}
+                        <div class="donation-item list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">
+                                        {% if donation.is_anonymous %}
+                                            <i class="bi bi-incognito me-2"></i>Anonyme
+                                        {% else %}
+                                        <img src="{{ donation.donor.profile_picture_url or url_for('static', filename='images/default-avatar.png') }}"
+                                             alt="{{ donation.donor.username }}" class="rounded-circle me-2" width="24" height="24">
+                                   {{ donation.donor.username }}
+                                                                           {% endif %}
+                                    </h6>
+                                    {% if donation.message %}
+                                    <p class="small text-muted mb-1">"{{ donation.message }}"</p>
+                                    {% endif %}
+                                    <small class="text-muted">{{ donation.created_at|format_datetime }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-success rounded-pill px-3 py-2">
+                                        {{ donation.amount|format_currency }} XOF
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-coin fs-1 text-muted mb-3"></i>
+                        <h5 class="fw-bold">Aucun don pour le moment</h5>
+                        <p class="text-muted">Soyez le premier à contribuer !</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar - Style moderne -->
+        <div class="col-lg-4">
+            <!-- Organisateur -->
+            <div class="glass-card mb-4">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">Organisateur</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="flex-shrink-0">
+                            <div class="avatar-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                                {{ creator.username[0]|upper }}
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-0">{{ creator.username }}</h6>
+                            <small class="text-muted">Créée le {{ campaign.start_date|format_date }}</small>
+                        </div>
+                    </div>
+                    <a href="#" class="btn btn-outline-primary w-100 rounded-pill">
+                        <i class="bi bi-envelope me-2"></i>Contacter
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Statistiques -->
+            <div class="glass-card">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">Statistiques</h5>
+                </div>
+                <div class="card-body">
+                    <div class="stats-grid">
+                        <div class="stats-card mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Montant collecté</h6>
+                                    <small class="text-muted">Total des dons</small>
+                                </div>
+                                <span class="badge bg-primary rounded-pill px-3 py-2">
+                                    {{ campaign.current_amount|format_currency }} XOF
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="stats-card mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Objectif</h6>
+                                    <small class="text-muted">Montant visé</small>
+                                </div>
+                                <span class="badge bg-primary rounded-pill px-3 py-2">
+                                    {{ campaign.target_amount|format_currency }} XOF
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="stats-card mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Dons</h6>
+                                    <small class="text-muted">Nombre total</small>
+                                </div>
+                                <span class="badge bg-primary rounded-pill px-3 py-2">
+                                    {{ donations|length }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="stats-card">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Jours restants</h6>
+                                    <small class="text-muted">Temps restant</small>
+                                </div>
+                                <span class="badge bg-primary rounded-pill px-3 py-2">
+                                    {{ days_remaining if days_remaining is not none else '∞' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

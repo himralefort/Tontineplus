@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de bord{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <h2 class="fw-bold mb-4">Tableau de bord</h2>
+            
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0">Solde du portefeuille</h5>
+                                <i class="bi bi-wallet2 text-primary fs-4"></i>
+                            </div>
+                            <h3 class="fw-bold">{{ wallet.balance|format_currency }} XOF</h3>
+                            <a href="{{ url_for('wallet') }}" class="btn btn-sm btn-outline-primary mt-3">Voir le portefeuille</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0">Mes tontines</h5>
+                                <i class="bi bi-people-fill text-success fs-4"></i>
+                            </div>
+                            <h3 class="fw-bold">{{ tontines|length }}</h3>
+                            <a href="{{ url_for('tontines_list') }}" class="btn btn-sm btn-outline-success mt-3">Voir mes tontines</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Transactions récentes</h5>
+                </div>
+                <div class="card-body">
+                    {% if transactions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Montant</th>
+                                    <th>Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in transactions %}
+                                <tr>
+                                    <td>{{ transaction.created_at|format_datetime('short') }}</td>
+                                    <td>{{ transaction.description }}</td>
+                                    <td class="{% if transaction.transaction_type == 'deposit' %}text-success{% else %}text-danger{% endif %}">
+                                        {% if transaction.transaction_type == 'deposit' %}+{% else %}-{% endif %}
+                                        {{ transaction.amount|format_currency }} XOF
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{% if transaction.status == 'completed' %}success{% else %}warning{% endif %}">
+                                            {{ transaction.status|capitalize }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-clock-history fs-1 text-muted"></i>
+                        <p class="mt-2">Aucune transaction récente</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Mes tontines actives</h5>
+                </div>
+                <div class="card-body">
+                    {% if tontines %}
+                    <div class="list-group list-group-flush">
+                        {% for tontine in tontines %}
+                        <a href="{{ url_for('tontine_detail', tontine_id=tontine.id) }}" 
+                           class="list-group-item list-group-item-action">
+                            <div class="d-flex justify-content-between">
+                                <h6 class="mb-1">{{ tontine.name }}</h6>
+                                <span class="badge bg-primary">{{ tontine.amount_per_member|format_currency }} XOF</span>
+                            </div>
+                            <small class="text-muted">{{ tontine.frequency|capitalize }}</small>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-people fs-1 text-muted"></i>
+                        <p class="mt-2">Vous n'avez pas encore rejoint de tontine</p>
+                        <a href="{{ url_for('tontines_list') }}" class="btn btn-sm btn-primary">Rejoindre une tontine</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Mes collectes</h5>
+                </div>
+                <div class="card-body">
+                    {% if campaigns %}
+                    <div class="list-group list-group-flush">
+                        {% for campaign in campaigns %}
+                        <a href="{{ url_for('campaign_detail', campaign_id=campaign.id) }}" 
+                           class="list-group-item list-group-item-action">
+                            <div class="d-flex justify-content-between">
+                                <h6 class="mb-1">{{ campaign.title }}</h6>
+                                <span class="badge bg-success">{{ campaign.current_amount|format_currency }} XOF</span>
+                            </div>
+                            <div class="progress mt-2" style="height: 5px;">
+                                <div class="progress-bar" role="progressbar" 
+                                     style="width: {{ (campaign.current_amount / campaign.target_amount * 100)|round(1) }}%">
+                                </div>
+                            </div>
+                            <small class="text-muted">{{ campaign.current_amount|format_currency }} / {{ campaign.target_amount|format_currency }} XOF</small>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-collection fs-1 text-muted"></i>
+                        <p class="mt-2">Vous n'avez pas encore créé de collecte</p>
+                        <a href="{{ url_for('campaign_create') }}" class="btn btn-sm btn-primary">Créer une collecte</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
