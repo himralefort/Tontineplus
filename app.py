@@ -13,17 +13,29 @@ import logging
 from functools import wraps
 from flask_socketio import SocketIO, join_room, leave_room, send
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
+from dotenv import load_dotenv
+
+# Charger les variables d'environnement depuis le fichier .env
+load_dotenv()
 
 # Configuration de l'application
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '6d9348c846d2c517894e87b972b517c9'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tontine.db'
+
+# Utilise DATABASE_URL depuis .env, sinon utilise SQLite localement
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///tontine.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
+
+# Initialisation des extensions
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+socketio = SocketIO(app)
 login_manager = LoginManager()
-login_manager.login_view = 'login'  # nom de la vue login
+login_manager.login_view = 'login'
 login_manager.init_app(app)
+
 
 # Extensions
 db = SQLAlchemy(app)
