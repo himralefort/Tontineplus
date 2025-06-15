@@ -499,11 +499,22 @@ def format_date(value, format='short'):
         return value.strftime('%A %d %B %Y')
     return value.isoformat()
 
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    if exception:
+        db.session.rollback()
+    db.session.remove()
+
+
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
-
-
+    try:
+        return User.query.get(int(user_id))
+    except SQLAlchemyError as e:
+        db.session.rollback()  # <- Important : annule l'état d'échec
+        current_app.logger.error(f"Erreur lors du chargement de l'utilisateur : {e}")
+        return None
+        
 # Routes d'authentification
 @app.route('/')
 def index():
