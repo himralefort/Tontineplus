@@ -14,6 +14,7 @@ from functools import wraps
 from flask_socketio import SocketIO, join_room, leave_room, send
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 from dotenv import load_dotenv
+from sqlalchemy.exc import SQLAlchemyError
 
 # Charger les variables d'environnement depuis le fichier .env
 load_dotenv()
@@ -380,6 +381,7 @@ def time_ago(value):
 # Enregistrer le filtre dans Jinja
 app.jinja_env.filters['time_ago'] = time_ago
 
+
 def send_notification(user_id, message, link=None):
     """Crée et envoie une notification"""
     try:
@@ -606,6 +608,12 @@ def register():
         return redirect(url_for('login'))
 
     return render_template('auth/register.html')
+
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    if exception:
+        db.session.rollback()
+    db.session.remove()
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
