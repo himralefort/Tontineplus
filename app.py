@@ -21,29 +21,25 @@ load_dotenv()
 # Configuration de l'application
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '6d9348c846d2c517894e87b972b517c9'
-
-# Utilise DATABASE_URL depuis .env, sinon utilise SQLite localement
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///tontine.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
 
-# Initialisation des extensions
+# ✅ Initialisation unique des extensions
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 socketio = SocketIO(app)
+
+# 🔐 Configuration login
 login_manager = LoginManager()
 login_manager.login_view = 'login'
 login_manager.init_app(app)
 
-
-# Extensions
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
-socketio = SocketIO(app)
 # Créer les dossiers nécessaires s'ils n'existent pas
 os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'profile_pictures'), exist_ok=True)
-# Modèles de données
+
+# Modèles de données (à suivre...)
 
 class UserTontine(db.Model):
     __tablename__ = 'user_tontine'
