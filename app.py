@@ -562,6 +562,8 @@ def index():
         # Pour visiteur non connecté
         return render_template('index_public.html')
     
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -572,12 +574,10 @@ def register():
         last_name = request.form.get('last_name')
         phone = request.form.get('phone')
 
-        # Vérification des champs requis
         if not username or not email or not password:
             flash('Veuillez remplir tous les champs obligatoires', 'danger')
             return redirect(url_for('register'))
 
-        # Validation unicité username et email
         if User.query.filter_by(username=username).first():
             flash("Ce nom d'utilisateur est déjà pris", 'danger')
             return redirect(url_for('register'))
@@ -586,46 +586,51 @@ def register():
             flash("Cet email est déjà utilisé", 'danger')
             return redirect(url_for('register'))
 
-        # Hashage du mot de passe
-        hashed_password = generate_password_hash(password)
+        try:
+            hashed_password = generate_password_hash(password)
 
-        # Création de l'utilisateur
-        new_user = User(
-            public_id=str(uuid.uuid4()),
-            username=username,
-            email=email,
-            password=hashed_password,
-            first_name=first_name,
-            last_name=last_name,
-            phone=phone
-        )
-        db.session.add(new_user)
-        db.session.commit()
+            new_user = User(
+                public_id=str(uuid.uuid4()),
+                username=username,
+                email=email,
+                password=hashed_password,
+                first_name=first_name,
+                last_name=last_name,
+                phone=phone
+            )
+            db.session.add(new_user)
+            db.session.flush()  # 👈 Assigne un id sans commit
 
-        # Création du portefeuille lié à l'utilisateur
-        new_wallet = Wallet(user_id=new_user.id)
-        db.session.add(new_wallet)
+            new_wallet = Wallet(user_id=new_user.id)
+            db.session.add(new_wallet)
 
-        # ** Gestion invitation tontine **
-        token = session.pop('invite_token', None)  # Récupère et supprime le token en session
-        if token:
-            invitation = TontineInvitation.query.filter_by(token=token, accepted=False).first()
-            if invitation:
-                # Ajouter le nouvel utilisateur comme membre
-                existing_membership = TontineMember.query.filter_by(
-                    user_id=new_user.id, tontine_id=invitation.tontine_id).first()
-                if not existing_membership:
-                    membership = TontineMember(user_id=new_user.id, tontine_id=invitation.tontine_id)
-                    db.session.add(membership)
-                # Marquer invitation comme acceptée
-                invitation.accepted = True
+            token = session.pop('invite_token', None)
+            if token:
+                invitation = TontineInvitation.query.filter_by(token=token, accepted=False).first()
+                if invitation:
+                    if not TontineMember.query.filter_by(user_id=new_user.id, tontine_id=invitation.tontine_id).first():
+                        membership = TontineMember(user_id=new_user.id, tontine_id=invitation.tontine_id)
+                        db.session.add(membership)
+                    invitation.accepted = True
 
-        db.session.commit()
+            db.session.commit()
+            flash('Inscription réussie ! Vous pouvez maintenant vous connecter.', 'success')
+            return redirect(url_for('login'))
 
-        flash('Inscription réussie ! Vous pouvez maintenant vous connecter.', 'success')
-        return redirect(url_for('login'))
+        except IntegrityError as e:
+            db.session.rollback()
+            flash("Erreur de base de données : doublon ou contrainte", 'danger')
+            current_app.logger.error(f"[register] IntegrityError: {e}")
+            return redirect(url_for('register'))
+
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            flash("Erreur serveur. Merci de réessayer plus tard.", 'danger')
+            current_app.logger.error(f"[register] SQLAlchemyError: {e}")
+            return redirect(url_for('register'))
 
     return render_template('auth/register.html')
+
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):
