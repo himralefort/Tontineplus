@@ -509,11 +509,13 @@ def shutdown_session(exception=None):
 @login_manager.user_loader
 def load_user(user_id):
     try:
-        return User.query.get(int(user_id))
+        return db.session.get(User, int(user_id))
     except SQLAlchemyError as e:
         db.session.rollback()
         current_app.logger.error(f"[load_user] Erreur SQL: {e}")
         return None
+
+
 
 @app.errorhandler(500)
 def internal_server_error(error):
