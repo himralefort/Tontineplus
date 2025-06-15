@@ -511,9 +511,16 @@ def load_user(user_id):
     try:
         return User.query.get(int(user_id))
     except SQLAlchemyError as e:
-        db.session.rollback()  # <- Important : annule l'état d'échec
-        current_app.logger.error(f"Erreur lors du chargement de l'utilisateur : {e}")
+        db.session.rollback()
+        current_app.logger.error(f"[load_user] Erreur SQL: {e}")
         return None
+
+@app.errorhandler(500)
+def internal_server_error(error):
+    db.session.rollback()
+    current_app.logger.error(f"[500] Internal Server Error: {error}")
+    return render_template('errors/500.html'), 500
+
         
 # Routes d'authentification
 @app.route('/')
