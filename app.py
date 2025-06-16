@@ -22,8 +22,7 @@ load_dotenv()
 # Configuration de l'application
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '6d9348c846d2c517894e87b972b517c9'
-DATABASE_URL = os.getenv("DATABASE_URL")
-print("URL de la base de données :", DATABASE_URL)
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
@@ -32,7 +31,8 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 socketio = SocketIO(app)
-
+DATABASE_URL = os.getenv("DATABASE_URL")
+print("URL de la base de données :", DATABASE_URL)
 # 🔐 Configuration login
 login_manager = LoginManager()
 login_manager.login_view = 'login'
