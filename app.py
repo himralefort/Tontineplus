@@ -22,8 +22,7 @@ load_dotenv()
 # Configuration de l'application
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '6d9348c846d2c517894e87b972b517c9'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///tontine.db').replace(
-    'postgres://', 'postgresql://')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
