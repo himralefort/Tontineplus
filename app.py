@@ -47,7 +47,7 @@ class UserTontine(db.Model):
     __table_args__ = {'extend_existing': True}
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))  # Changé de 'user.id' à 'users.id'
     tontine_id = db.Column(db.Integer, db.ForeignKey('tontine.id'))
     is_active = db.Column(db.Boolean, default=True)
 
@@ -66,6 +66,8 @@ class UserTontine(db.Model):
         ).scalar()
 
 class User(db.Model, UserMixin):
+    __tablename__ = 'users'  # Changement crucial ici
+
     id = db.Column(db.Integer, primary_key=True)
     public_id = db.Column(db.String(50), unique=True)
     username = db.Column(db.String(50), unique=True)
@@ -354,7 +356,15 @@ class UserProfileHistory(db.Model):
     changed_by = db.Column(db.Integer, db.ForeignKey('user.id'))  # Pour suivre qui a fait le changement
     changed_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+def create_tables():
+    with app.app_context():
+        db.create_all()
+        print("Tables créées avec succès")
 
+# Appelez cette fonction au démarrage
+if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or __name__ == '__main__':
+    create_tables()
+    
 def time_ago(value):
     """Affiche un texte relatif du temps écoulé depuis la date donnée."""
     if not value:
