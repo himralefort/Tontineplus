@@ -48,7 +48,7 @@ class UserTontine(db.Model):
     __table_args__ = {'extend_existing': True}
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))  # Changé de 'user.id' à 'users.id'
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     tontine_id = db.Column(db.Integer, db.ForeignKey('tontine.id'))
     is_active = db.Column(db.Boolean, default=True)
 
@@ -67,8 +67,6 @@ class UserTontine(db.Model):
         ).scalar()
 
 class User(db.Model, UserMixin):
-    __tablename__ = 'users'  # Changement crucial ici
-
     id = db.Column(db.Integer, primary_key=True)
     public_id = db.Column(db.String(50), unique=True)
     username = db.Column(db.String(50), unique=True)
@@ -120,13 +118,6 @@ class User(db.Model, UserMixin):
     def recent_notifications(self, limit=5):
         return Notification.query.filter_by(user_id=self.id).order_by(Notification.created_at.desc()).limit(limit).all()
 
-def initialize_database():
-    with app.app_context():
-        try:
-            db.create_all()
-            print("✔ Tables créées avec succès")
-        except Exception as e:
-            print(f"✖ Erreur création tables: {str(e)}")
 
 
 class Wallet(db.Model):
