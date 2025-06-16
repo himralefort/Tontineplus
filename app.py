@@ -22,7 +22,8 @@ load_dotenv()
 # Configuration de l'application
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '6d9348c846d2c517894e87b972b517c9'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///tontine.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///tontine.db').replace(
+    'postgres://', 'postgresql://')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
@@ -119,7 +120,13 @@ class User(db.Model, UserMixin):
     def recent_notifications(self, limit=5):
         return Notification.query.filter_by(user_id=self.id).order_by(Notification.created_at.desc()).limit(limit).all()
 
-
+def initialize_database():
+    with app.app_context():
+        try:
+            db.create_all()
+            print("✔ Tables créées avec succès")
+        except Exception as e:
+            print(f"✖ Erreur création tables: {str(e)}")
 
 
 class Wallet(db.Model):
