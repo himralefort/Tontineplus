@@ -6,11 +6,18 @@
 <div class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="display-5 fw-bold mb-0">Mes Notifications</h1>
-        <form method="post" action="{{ url_for('clear_notifications') }}">
-            <button type="submit" class="btn btn-outline-danger">
-                <i class="bi bi-trash me-2"></i>Tout effacer
-            </button>
-        </form>
+        <div>
+            <form method="post" action="{{ url_for('mark_all_notifications_read') }}" class="d-inline me-2">
+                <button type="submit" class="btn btn-outline-secondary">
+                    <i class="bi bi-check-circle me-2"></i>Tout marquer comme lu
+                </button>
+            </form>
+            <form method="post" action="{{ url_for('clear_notifications') }}" class="d-inline">
+                <button type="submit" class="btn btn-outline-danger">
+                    <i class="bi bi-trash me-2"></i>Tout effacer
+                </button>
+            </form>
+        </div>
     </div>
 
     <div class="card shadow-sm">
@@ -18,22 +25,139 @@
             {% if notifications %}
             <div class="list-group list-group-flush">
                 {% for notification in notifications %}
-                <a href="#" class="list-group-item list-group-item-action {% if not notification.read %}list-group-item-primary{% endif %}">
-                    <div class="d-flex w-100 justify-content-between">
-                        <p class="mb-1">{{ notification.message }}</p>
-                        <small class="text-muted">{{ notification.created_at|time_ago }}</small>
+                <a href="{% if notification.link %}{{ notification.link }}{% else %}#{% endif %}" 
+                   class="list-group-item list-group-item-action {% if not notification.read %}bg-light{% endif %}"
+                   onclick="markAsRead({{ notification.id }})">
+                    <div class="d-flex w-100 justify-content-between align-items-start">
+                        <div class="flex-grow-1 me-3">
+                            <div class="d-flex align-items-center mb-1">
+                                <!-- Icône selon le type de notification -->
+                                <span class="me-2 text-{{ 
+                                    'primary' if notification.notification_type == 'tontine' 
+                                    else 'success' if notification.notification_type == 'payment' 
+                                    else 'info' if notification.notification_type == 'invitation' 
+                                    else 'warning'
+                                }}">
+                                    <i class="bi 
+                                        {% if notification.notification_type == 'tontine' %} bi-people-fill
+                                        {% elif notification.notification_type == 'payment' %} bi-cash-coin
+                                        {% elif notification.notification_type == 'invitation' %} bi-envelope-fill
+                                        {% elif notification.notification_type == 'message' %} bi-chat-left-text
+                                        {% else %} bi-bell-fill
+                                        {% endif %} 
+                                    fs-5"></i>
+                                </span>
+                                <p class="mb-0">{{ notification.message }}</p>
+                            </div>
+                            <div class="d-flex">
+                                <small class="text-muted me-2">
+                                    <i class="bi bi-clock-history me-1"></i>
+                                    {{ notification.created_at|time_ago }}
+                                </small>
+                                {% if notification.notification_type %}
+                                <small class="badge bg-{{
+                                    'primary' if notification.notification_type == 'tontine' 
+                                    else 'success' if notification.notification_type == 'payment' 
+                                    else 'info' if notification.notification_type == 'invitation' 
+                                    else 'secondary'
+                                }}">
+                                    {{ notification.notification_type|replace('_', ' ')|title }}
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if not notification.read %}
+                        <span class="badge bg-primary rounded-pill">Nouveau</span>
+                        {% endif %}
                     </div>
                 </a>
                 {% endfor %}
             </div>
+            
+            <!-- Pagination -->
+            <div class="p-3 border-top">
+                <nav aria-label="Pagination">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if page > 1 %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('notifications', page=page-1) }}">Précédent</a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for p in range(1, total_pages + 1) %}
+                        <li class="page-item {% if p == page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('notifications', page=p) }}">{{ p }}</a>
+                        </li>
+                        {% endfor %}
+                        
+                        {% if page < total_pages %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('notifications', page=page+1) }}">Suivant</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
             {% else %}
             <div class="text-center py-5">
                 <i class="bi bi-bell-slash display-4 text-muted opacity-25 mb-3"></i>
-                <h4>Aucune notification</h4>
+                <h4 class="fw-light">Aucune notification</h4>
                 <p class="text-muted">Vous n'avez aucune notification pour le moment</p>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary mt-3">
+                    <i class="bi bi-house-door me-2"></i>Retour à l'accueil
+                </a>
             </div>
             {% endif %}
         </div>
     </div>
 </div>
+
+<script>
+function markAsRead(notificationId) {
+    // Marquer comme lu via AJAX
+    fetch('/notifications/mark-read/' + notificationId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.success) {
+            // Mettre à jour le compteur de notifications
+            updateNotificationCount();
+        }
+    });
+}
+
+function updateNotificationCount() {
+    // Mettre à jour le badge de notification dans la navbar
+    const badge = document.getElementById('notification-badge');
+    if(badge) {
+        fetch('/notifications/count')
+            .then(response => response.json())
+            .then(data => {
+                badge.textContent = data.count > 0 ? data.count : '';
+                badge.style.display = data.count > 0 ? 'flex' : 'none';
+            });
+    }
+}
+</script>
+
+<style>
+.list-group-item {
+    transition: background-color 0.2s ease;
+}
+.list-group-item:hover {
+    background-color: #f8f9fa !important;
+}
+.notification-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+</style>
 {% endblock %}
