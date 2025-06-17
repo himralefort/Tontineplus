@@ -19,18 +19,13 @@ from sqlalchemy.exc import SQLAlchemyError
 # Charger les variables d'environnement depuis le fichier .env
 load_dotenv()
 
-# Obtenir l'URL de la base de données depuis les variables d'environnement
-DATABASE_URL = os.getenv("DATABASE_URL")
-print("URL de la base de données :", DATABASE_URL)
-
 # Configuration de l'application
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '6d9348c846d2c517894e87b972b517c9'
-app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///tontine.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
-
 
 # ✅ Initialisation unique des extensions
 db = SQLAlchemy(app)
@@ -46,6 +41,7 @@ login_manager.init_app(app)
 os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'profile_pictures'), exist_ok=True)
 
 # Modèles de données (à suivre...)
+
 class UserTontine(db.Model):
     __tablename__ = 'user_tontine'
     __table_args__ = {'extend_existing': True}
@@ -68,7 +64,7 @@ class UserTontine(db.Model):
                 tontine_id=tontine_id
             ).exists()
         ).scalar()
-        
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     public_id = db.Column(db.String(50), unique=True)
@@ -113,13 +109,15 @@ class User(db.Model, UserMixin):
     @property
     def is_anonymous(self):
         return False
-
     @property
     def unread_notifications(self):
         return Notification.query.filter_by(user_id=self.id, read=False).count()
 
+    @property
     def recent_notifications(self, limit=5):
         return Notification.query.filter_by(user_id=self.id).order_by(Notification.created_at.desc()).limit(limit).all()
+
+
 
 
 class Wallet(db.Model):
@@ -335,20 +333,9 @@ class Notification(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     read = db.Column(db.Boolean, default=False)
     link = db.Column(db.String(200))  # Optionnel pour des liens cliquables
-    notification_type = db.Column(db.String(50))  # Nouveau champ pour le type
-    related_id = db.Column(db.Integer)  # ID de l'entité concernée (tontine_id, contribution_id, etc.)
 
     user = db.relationship('User', backref=db.backref('notifications', lazy='dynamic'))
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'message': self.message,
-            'created_at': self.created_at.isoformat(),
-            'read': self.read,
-            'link': self.link,
-            'type': self.notification_type
-        }
+
 
 # Ajoutez ces classes après les autres modèles
 class UserProfilePicture(db.Model):
@@ -367,15 +354,7 @@ class UserProfileHistory(db.Model):
     changed_by = db.Column(db.Integer, db.ForeignKey('user.id'))  # Pour suivre qui a fait le changement
     changed_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-def create_tables():
-    with app.app_context():
-        db.create_all()
-        print("Tables créées avec succès")
 
-# Appelez cette fonction au démarrage
-if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or __name__ == '__main__':
-    create_tables()
-    
 def time_ago(value):
     """Affiche un texte relatif du temps écoulé depuis la date donnée."""
     if not value:
@@ -403,70 +382,30 @@ def time_ago(value):
 app.jinja_env.filters['time_ago'] = time_ago
 
 
-def create_notification(user_id, message, notification_type, related_id=None, link=None):
-    """Crée une nouvelle notification"""
-    notification = Notification(
-        user_id=user_id,
-        message=message,
-        notification_type=notification_type,
-        related_id=related_id,
-        link=link,
-        read=False
-    )
-    db.session.add(notification)
-    db.session.commit()
-    
-    # Envoi via Socket.IO si l'utilisateur est connecté
-    socketio.emit('new_notification', 
-                 notification.to_dict(),
-                 room=f'user_{user_id}',
-                 namespace='/notifications')
-    return notification
-
-def notify_tontine_members(tontine_id, message, exclude_user_id=None, notification_type='tontine'):
-    """Notifie tous les membres d'une tontine"""
-    members = UserTontine.query.filter_by(tontine_id=tontine_id).all()
-    for member in members:
-        if exclude_user_id and member.user_id == exclude_user_id:
-            continue
-        create_notification(
-            member.user_id,
-            message,
-            notification_type,
-            related_id=tontine_id,
-            link=url_for('tontine_detail', tontine_id=tontine_id)
-        )
-
-def send_notification(user_id, message, notification_type=None, link=None, related_id=None):
-    """Envoie une notification à un utilisateur"""
+def send_notification(user_id, message, link=None):
+    """Crée et envoie une notification"""
     try:
         notification = Notification(
             user_id=user_id,
             message=message,
-            notification_type=notification_type,
             link=link,
-            related_id=related_id,
             read=False
         )
         db.session.add(notification)
         db.session.commit()
         
-        # Envoi via Socket.IO pour une mise à jour en temps réel
-        socketio.emit('new_notification', {
-            'id': notification.id,
-            'message': message,
-            'type': notification_type,
-            'link': link,
-            'created_at': notification.created_at.isoformat(),
-            'unread_count': Notification.query.filter_by(user_id=user_id, read=False).count()
-        }, room=f'user_{user_id}')
-        
-        return True
+        # Envoi via Socket.IO si configuré
+        if socketio:
+            socketio.emit('new_notification', {
+                'user_id': user_id,
+                'message': message,
+                'link': link,
+                'unread_count': Notification.query.filter_by(user_id=user_id, read=False).count()
+            }, namespace='/notifications')
+            
     except Exception as e:
-        current_app.logger.error(f"Erreur lors de l'envoi de notification: {str(e)}")
+        current_app.logger.error(f"Erreur notification: {str(e)}")
         db.session.rollback()
-        return False
-
 
 def notify_tontine_members(tontine_id, message, exclude_user_id=None):
     """Envoie une notification à tous les membres d'une tontine"""
@@ -627,6 +566,7 @@ def index():
     
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -693,7 +633,6 @@ def register():
 
     return render_template('auth/register.html')
 
-
 @app.teardown_appcontext
 def shutdown_session(exception=None):
     if exception:
@@ -731,9 +670,9 @@ def notifications():
         .order_by(Notification.created_at.desc()).all()
 
     return render_template('notifications/list.html', notifications=all_notifications)
+    
 
-
-@app.route('/notifications/mark-read/<int:notification_id>', methods=['POST'])
+@app.route('/notifications/read/<int:notification_id>', methods=['POST'])
 @login_required
 def mark_notification_read(notification_id):
     notification = Notification.query.filter_by(id=notification_id, user_id=current_user.id).first_or_404()
@@ -989,7 +928,6 @@ def wallet():
     return render_template('wallet/index.html', wallet=wallet, transactions=transactions)
 
 
-
 @app.route('/wallet/deposit', methods=['GET', 'POST'])
 @login_required
 def wallet_deposit():
@@ -1047,7 +985,6 @@ def wallet_withdraw():
         return redirect(url_for('wallet'))
 
     return render_template('wallet/withdraw.html', wallet=wallet)
-
 @app.route('/tontines', methods=['GET', 'POST'])
 @login_required
 def tontines_list():
@@ -1086,7 +1023,6 @@ def tontines_list():
         pending_request_ids=pending_request_ids,
         search_query=search_query
     )
-
 
 @app.route('/tontine/<int:tontine_id>/requests/<int:request_id>/approve', methods=['POST'])
 @login_required
@@ -1395,104 +1331,78 @@ def tontine_detail(tontine_id):
 @app.route('/tontine/<int:tontine_id>/pay', methods=['POST'])
 @login_required
 def make_payment(tontine_id):
-    try:
-        tontine = Tontine.query.get_or_404(tontine_id)
-        
-        # Vérifier que l'utilisateur est membre actif
-        membership = UserTontine.query.filter_by(
-            user_id=current_user.id,
-            tontine_id=tontine.id,
-            is_active=True
-        ).first()
-        
-        if not membership:
-            flash("Vous n'êtes pas membre actif de cette tontine", "danger")
-            return redirect(url_for('tontine_detail', tontine_id=tontine_id))
-
-        # Trouver le cycle actif
-        current_cycle = TontineCycle.query.filter_by(
-            tontine_id=tontine.id,
-            is_completed=False
-        ).order_by(TontineCycle.start_date.desc()).first()
-        
-        if not current_cycle:
-            flash("Aucun cycle actif pour cette tontine", "danger")
-            return redirect(url_for('tontine_detail', tontine_id=tontine_id))
-
-        # Vérifier si l'utilisateur a déjà payé pour ce cycle
-        existing_payment = Contribution.query.filter_by(
-            user_id=current_user.id,
-            cycle_id=current_cycle.id,
-            status='paid'
-        ).first()
-        
-        if existing_payment:
-            flash("Vous avez déjà payé pour ce cycle", "info")
-            return redirect(url_for('tontine_detail', tontine_id=tontine_id))
-
-        # Vérifier le solde du portefeuille
-        wallet = Wallet.query.filter_by(user_id=current_user.id).first()
-        if not wallet or wallet.balance < tontine.amount_per_member:
-            flash("Solde insuffisant dans votre portefeuille", "danger")
-            return redirect(url_for('tontine_detail', tontine_id=tontine_id))
-
-        # Créer la contribution
-        reference = generate_reference()
-        new_contribution = Contribution(
-            user_id=current_user.id,
-            cycle_id=current_cycle.id,
-            user_tontine_id=membership.id,
-            amount=tontine.amount_per_member,
-            payment_method='wallet',
-            transaction_reference=reference,
-            status='paid',
-            paid_at=datetime.utcnow()
-        )
-        db.session.add(new_contribution)
-        
-        # Débiter le portefeuille
-        transaction = Transaction(
-            wallet_id=wallet.id,
-            amount=tontine.amount_per_member,
-            transaction_type='tontine_contribution',
-            reference=reference,
-            status='completed',
-            description=f'Cotisation pour {tontine.name} - Cycle {current_cycle.id}',
-            tontine_cycle_id=current_cycle.id
-        )
-        db.session.add(transaction)
-        wallet.balance -= tontine.amount_per_member
-        
-        # Notifications
-        # Pour le membre
-        create_notification(
-            current_user.id,
-            f"Paiement de {tontine.amount_per_member} XOF confirmé pour {tontine.name}",
-            'payment_confirmed',
-            tontine.id,
-            url_for('tontine_detail', tontine_id=tontine.id)
-        )
-        
-        # Pour l'admin (si différent du membre)
-        if current_user.id != tontine.creator_id:
-            create_notification(
-                tontine.creator_id,
-                f"{current_user.username} a payé sa cotisation pour {tontine.name}",
-                'payment_received',
-                tontine.id,
-                url_for('tontine_manage', tontine_id=tontine.id)
-            )
-        
-        db.session.commit()
-        
-        flash("Paiement effectué avec succès", "success")
-        return redirect(url_for('tontine_detail', tontine_id=tontine.id))
-
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(f"Erreur paiement tontine: {str(e)}")
-        flash("Une erreur est survenue lors du paiement", "danger")
+    tontine = Tontine.query.get_or_404(tontine_id)
+    user_id = session['user_id']
+    
+    # Vérifier que l'utilisateur est membre
+    membership = UserTontine.query.filter_by(user_id=user_id, tontine_id=tontine.id).first()
+    if not membership:
+        flash("Vous n'êtes pas membre de cette tontine", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
+    
+    # Trouver le cycle actif
+    current_cycle = TontineCycle.query.filter_by(
+        tontine_id=tontine.id,
+        is_completed=False
+    ).order_by(TontineCycle.start_date.desc()).first()
+    
+    if not current_cycle:
+        flash("Aucun cycle actif pour cette tontine", "danger")
+        return redirect(url_for('tontine_detail', tontine_id=tontine_id))
+    
+    # Vérifier si l'utilisateur a déjà payé pour ce cycle
+    existing_payment = Contribution.query.filter_by(
+        user_id=user_id,
+        cycle_id=current_cycle.id
+    ).first()
+    
+    if existing_payment:
+        flash("Vous avez déjà payé pour ce cycle", "info")
+        return redirect(url_for('tontine_detail', tontine_id=tontine_id))
+    
+    # Effectuer le paiement
+    wallet = Wallet.query.filter_by(user_id=user_id).first()
+    if not wallet or wallet.balance < tontine.amount_per_member:
+        flash("Solde insuffisant dans votre portefeuille", "danger")
+        return redirect(url_for('tontine_detail', tontine_id=tontine_id))
+    
+    # Créer la contribution
+    new_contribution = Contribution(
+        user_id=user_id,
+        cycle_id=current_cycle.id,
+        user_tontine_id=membership.id,
+        amount=tontine.amount_per_member,
+        payment_method='wallet',
+        transaction_reference=generate_reference(),
+        status='paid',
+        paid_at=datetime.utcnow()
+    )
+    
+    # Mettre à jour le portefeuille
+    transaction = update_wallet_balance(
+        user_id,
+        tontine.amount_per_member,
+        'withdrawal',
+        f'Cotisation tontine {tontine.name} - cycle {current_cycle.id}'
+    )
+    
+    db.session.add(new_contribution)
+    db.session.commit()
+
+    # ✅ Notifications
+    send_notification(
+        user_id,
+        f"Paiement de {tontine.amount_per_member} XOF effectué pour la tontine {tontine.name}"
+    )
+    
+    if tontine.creator_id != user_id:
+        send_notification(
+            tontine.creator_id,
+            f"{current_user.username} a effectué son paiement pour la tontine {tontine.name}"
+        )
+    
+    flash("Paiement effectué avec succès", "success")
+    return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
 
 @app.route('/tontine/<int:cycle_id>/select_beneficiary', methods=['POST'])
@@ -1556,100 +1466,41 @@ def select_beneficiary(cycle_id):
     
     flash(f"Bénéficiaire sélectionné avec succès ({amount} XOF transférés)", "success")
     return redirect(url_for('tontine_detail', tontine_id=tontine.id))
-    
+
 @app.route('/tontines/create', methods=['GET', 'POST'])
 @login_required
 def tontine_create():
     if request.method == 'POST':
-        try:
-            # Validation des données
-            name = request.form.get('name')
-            if not name or len(name) < 3:
-                flash("Le nom de la tontine doit contenir au moins 3 caractères", "danger")
-                return redirect(url_for('tontine_create'))
-
-            amount = request.form.get('amount_per_member')
-            try:
-                amount_per_member = float(amount)
-                if amount_per_member <= 0:
-                    raise ValueError
-            except ValueError:
-                flash("Montant invalide par membre", "danger")
-                return redirect(url_for('tontine_create'))
-
-            frequency = request.form.get('frequency')
-            if frequency not in ['daily', 'weekly', 'monthly']:
-                flash("Fréquence invalide", "danger")
-                return redirect(url_for('tontine_create'))
-
-            max_members = request.form.get('max_members')
-            try:
-                max_members = int(max_members)
-                if max_members < 2:
-                    raise ValueError
-            except ValueError:
-                flash("Nombre de membres invalide (minimum 2)", "danger")
-                return redirect(url_for('tontine_create'))
-
-            # Création de la tontine
-            new_tontine = Tontine(
-                name=name,
-                description=request.form.get('description'),
-                amount_per_member=amount_per_member,
-                frequency=frequency,
-                max_members=max_members,
-                creator_id=current_user.id,
-                is_private=request.form.get('is_private') == 'on'
-            )
-            
-            db.session.add(new_tontine)
-            db.session.flush()  # Pour obtenir l'ID avant commit
-
-            # Ajouter le créateur comme membre
-            membership = UserTontine(
-                user_id=current_user.id,
-                tontine_id=new_tontine.id,
-                is_active=True
-            )
-            db.session.add(membership)
-            
-            # Créer le premier cycle
-            start_date = datetime.utcnow()
-            if frequency == 'daily':
-                end_date = start_date + timedelta(days=1)
-            elif frequency == 'weekly':
-                end_date = start_date + timedelta(weeks=1)
-            else:  # monthly
-                end_date = start_date + timedelta(days=30)
-                
-            new_cycle = TontineCycle(
-                tontine_id=new_tontine.id,
-                start_date=start_date,
-                end_date=end_date
-            )
-            db.session.add(new_cycle)
-            
-            db.session.commit()
-
-            # Notification
-            create_notification(
-                current_user.id,
-                f"Vous avez créé la tontine '{new_tontine.name}'",
-                'tontine_created',
-                new_tontine.id,
-                url_for('tontine_detail', tontine_id=new_tontine.id)
-            )
-
-            flash('Tontine créée avec succès!', 'success')
-            return redirect(url_for('tontine_detail', tontine_id=new_tontine.id))
-
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(f"Erreur création tontine: {str(e)}")
-            flash("Une erreur est survenue lors de la création", "danger")
-            return redirect(url_for('tontine_create'))
-
-    # GET request
+        name = request.form.get('name')
+        description = request.form.get('description')
+        amount_per_member = float(request.form.get('amount'))
+        frequency = request.form.get('frequency')
+        max_members = int(request.form.get('max_members'))
+        
+        new_tontine = Tontine(
+            name=name,
+            description=description,
+            amount_per_member=amount_per_member,
+            frequency=frequency,
+            start_date=datetime.utcnow(),
+            max_members=max_members,
+            creator_id=session['user_id']
+        )
+        
+        db.session.add(new_tontine)
+        db.session.commit()
+        
+        # Ajouter le créateur comme membre
+        user_tontine = UserTontine(
+            user_id=session['user_id'],
+            tontine_id=new_tontine.id
+        )
+        db.session.add(user_tontine)
+        db.session.commit()
+        
+        flash('Tontine créée avec succès!', 'success')
+        return redirect(url_for('tontine_detail', tontine_id=new_tontine.id))
+    
     return render_template('tontines/create.html')
 
 @app.route('/contact')
@@ -1734,91 +1585,46 @@ def tontine_join(tontine_id):
     return redirect(url_for('tontine_detail', tontine_id=tontine.id))
 
 
-@app.route('/tontine/<int:tontine_id>/invite', methods=['GET', 'POST'])
+
+@app.route('/tontines/<int:tontine_id>/invite', methods=['GET', 'POST'])
 @login_required
 def tontine_invite(tontine_id):
     tontine = Tontine.query.get_or_404(tontine_id)
-    
-    # Vérifier les permissions
-    if current_user.id != tontine.creator_id and not current_user.admin:
-        flash("Action non autorisée", "danger")
-        return redirect(url_for('tontine_detail', tontine_id=tontine_id))
-
     if request.method == 'POST':
-        try:
-            email_or_username = request.form.get('email_or_username').strip()
-            if not email_or_username:
-                flash("Veuillez entrer un email ou nom d'utilisateur", "danger")
-                return redirect(url_for('tontine_invite', tontine_id=tontine_id))
+        email = request.form['email']
+        token = str(uuid.uuid4())
+        invitation = TontineInvitation(tontine_id=tontine.id, email=email, token=token)
+        db.session.add(invitation)
+        db.session.commit()
+        # TODO : envoyer mail avec lien url_for('tontine_accept_invite', token=token)
+        flash(f"Invitation envoyée à {email}")
+        return redirect(url_for('tontine_detail', tontine_id=tontine.id))
+    return render_template('tontine_invite.html', tontine=tontine)
 
-            # Trouver l'utilisateur
-            user = User.query.filter(
-                (User.email == email_or_username) | 
-                (User.username == email_or_username)
-            ).first()
-            
-            if not user:
-                flash("Utilisateur non trouvé", "danger")
-                return redirect(url_for('tontine_invite', tontine_id=tontine_id))
-
-            # Vérifier si déjà membre
-            if UserTontine.query.filter_by(
-                user_id=user.id,
-                tontine_id=tontine.id
-            ).first():
-                flash("Cet utilisateur est déjà membre", "info")
-                return redirect(url_for('tontine_invite', tontine_id=tontine_id))
-
-            # Vérifier si la tontine est pleine
-            if tontine.current_members >= tontine.max_members:
-                flash("La tontine est complète", "danger")
-                return redirect(url_for('tontine_invite', tontine_id=tontine_id))
-
-            # Créer l'invitation
-            token = str(uuid.uuid4())
-            invitation = TontineInvitation(
-                tontine_id=tontine.id,
-                invited_by=current_user.id,
-                invited_user_id=user.id,
-                token=token,
-                status='pending'
-            )
-            db.session.add(invitation)
-            
-            # Créer les notifications
-            # Pour l'invité
-            create_notification(
-                user.id,
-                f"Vous avez été invité à rejoindre la tontine '{tontine.name}' par {current_user.username}",
-                'tontine_invitation',
-                tontine.id,
-                url_for('tontine_detail', tontine_id=tontine.id)
-            )
-            
-            # Pour l'admin
-            create_notification(
-                current_user.id,
-                f"Invitation envoyée à {user.username} pour la tontine '{tontine.name}'",
-                'tontine_invitation_sent',
-                tontine.id
-            )
-            
-            db.session.commit()
-            
-            flash(f"Invitation envoyée à {user.username}", "success")
-            return redirect(url_for('tontine_detail', tontine_id=tontine.id))
-
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(f"Erreur invitation: {str(e)}")
-            flash("Erreur lors de l'envoi de l'invitation", "danger")
-            return redirect(url_for('tontine_invite', tontine_id=tontine_id))
-
-    # GET request
-    return render_template('tontines/invite.html', tontine=tontine)
+@app.route('/tontines/invite/<token>', methods=['GET', 'POST'])
+def tontine_accept_invite(token):
+    invitation = TontineInvitation.query.filter_by(token=token, accepted=False).first_or_404()
+    if not current_user.is_authenticated:
+        # Sauvegarder le token en session puis rediriger vers inscription
+        session['invite_token'] = token
+        flash("Veuillez vous inscrire ou vous connecter pour accepter l'invitation.")
+        return redirect(url_for('register'))
+    
+    # Si utilisateur connecté, on ajoute directement
+    member_exists = TontineMember.query.filter_by(user_id=current_user.id, tontine_id=invitation.tontine_id).first()
+    if not member_exists:
+        membership = TontineMember(user_id=current_user.id, tontine_id=invitation.tontine_id)
+        db.session.add(membership)
+        invitation.accepted = True
+        db.session.commit()
+        flash("Vous avez rejoint la tontine !")
+    else:
+        flash("Vous êtes déjà membre de cette tontine.")
+    return redirect(url_for('tontine_detail', tontine_id=invitation.tontine_id))
 
 
 
+from flask_login import login_required, current_user
 
 @app.route('/campaigns')
 @login_required
@@ -1883,7 +1689,7 @@ def mark_notifications_read():
 @app.route('/notifications/mark-all-read', methods=['POST'])
 @login_required
 def mark_all_notifications_read():
-    Notification.query.filter_by(user_id=current_user.id, read=False).update({'read': True})
+    Notification.query.filter_by(user_id=current_user.id).update({'read': True})
     db.session.commit()
     flash("Toutes les notifications ont été marquées comme lues", "success")
     return redirect(url_for('notifications'))
@@ -1893,8 +1699,8 @@ def mark_all_notifications_read():
 def clear_notifications():
     Notification.query.filter_by(user_id=current_user.id).delete()
     db.session.commit()
-    flash("Toutes les notifications ont été supprimées", "success")
-    return redirect(url_for('notifications'))
+    flash("Toutes les notifications ont été supprimées.", "success")
+    return redirect(url_for('notifications'))  # ou 'dashboard' ou autre page
 
 @app.route('/tontine/<int:tontine_id>/manage')
 @login_required
@@ -2011,16 +1817,15 @@ def campaign_donate(campaign_id):
 @app.route('/api/wallet/balance')
 @login_required
 def api_wallet_balance():
-    wallet = Wallet.query.filter_by(user_id=current_user.id).first()
+    wallet = Wallet.query.filter_by(user_id=session['user_id']).first()
     if not wallet:
         return jsonify({'error': 'Wallet not found'}), 404
     return jsonify({'balance': wallet.balance})
 
-
 @app.route('/api/wallet/transactions')
 @login_required
 def api_wallet_transactions():
-    wallet = Wallet.query.filter_by(user_id=current_user.id).first()
+    wallet = Wallet.query.filter_by(user_id=session['user_id']).first()
     if not wallet:
         return jsonify({'error': 'Wallet not found'}), 404
     
@@ -2050,16 +1855,17 @@ def remove_member(tontine_id):
         flash("ID utilisateur manquant", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
-    # Vérification des permissions
-    is_admin = getattr(current_user, 'is_admin', False)
-    if current_user.id != tontine.creator_id and not is_admin:
+    # Vérifier les permissions avec current_user (plus sûr que session['user_id'])
+    if current_user.id != tontine.creator_id and not session.get('is_admin'):
         flash("Action non autorisée", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
+    # Empêcher de retirer le créateur
     if int(user_id) == tontine.creator_id:
         flash("Impossible de retirer le créateur", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
+    # Supprimer le membre
     membership = UserTontine.query.filter_by(user_id=user_id, tontine_id=tontine.id).first()
     if membership:
         db.session.delete(membership)
@@ -2071,28 +1877,23 @@ def remove_member(tontine_id):
     return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
 
-
 @app.route('/tontine/<int:tontine_id>/edit', methods=['POST'])
 @login_required
 def edit_tontine(tontine_id):
     tontine = Tontine.query.get_or_404(tontine_id)
-
+    
     # Vérifier les permissions
-    is_admin = getattr(current_user, 'is_admin', False)
-    if current_user.id != tontine.creator_id and not is_admin:
+    if session['user_id'] != tontine.creator_id and not session.get('is_admin'):
         flash("Action non autorisée", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
-
-    try:
-        tontine.name = request.form.get('name', tontine.name)
-        tontine.description = request.form.get('description', tontine.description)
-        tontine.amount_per_member = float(request.form.get('amount', tontine.amount_per_member))
-        tontine.frequency = request.form.get('frequency', tontine.frequency)
-        tontine.max_members = int(request.form.get('max_members', tontine.max_members))
-    except (ValueError, TypeError):
-        flash("Données invalides", "danger")
-        return redirect(url_for('tontine_detail', tontine_id=tontine_id))
-
+    
+    # Mettre à jour les informations
+    tontine.name = request.form.get('name')
+    tontine.description = request.form.get('description')
+    tontine.amount_per_member = float(request.form.get('amount'))
+    tontine.frequency = request.form.get('frequency')
+    tontine.max_members = int(request.form.get('max_members'))
+    
     db.session.commit()
     flash("Tontine mise à jour avec succès", "success")
     return redirect(url_for('tontine_detail', tontine_id=tontine_id))
@@ -2101,33 +1902,29 @@ def edit_tontine(tontine_id):
 @login_required
 def close_tontine(tontine_id):
     tontine = Tontine.query.get_or_404(tontine_id)
-
+    
     # Vérifier les permissions
-    is_admin = getattr(current_user, 'is_admin', False)
-    if current_user.id != tontine.creator_id and not is_admin:
+    if session['user_id'] != tontine.creator_id and not session.get('is_admin'):
         flash("Action non autorisée", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
-
+    
     tontine.is_active = False
     db.session.commit()
     flash("Tontine clôturée avec succès", "success")
     return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
-
 @app.route('/tontine/<int:tontine_id>/reopen', methods=['POST'])
 @login_required
 def reopen_tontine(tontine_id):
     tontine = Tontine.query.get_or_404(tontine_id)
-
+    
     # Vérifier les permissions
-    is_admin = getattr(current_user, 'is_admin', False)
-    if current_user.id != tontine.creator_id and not is_admin:
+    if session['user_id'] != tontine.creator_id and not session.get('is_admin'):
         flash("Action non autorisée", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
-
+    
     tontine.is_active = True
     db.session.commit()
-
     flash("Tontine réouverte avec succès", "success")
     return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
@@ -2135,26 +1932,22 @@ def reopen_tontine(tontine_id):
 @login_required
 def create_cycle(tontine_id):
     tontine = Tontine.query.get_or_404(tontine_id)
-
+    
     # Vérifier les permissions
-    is_admin = getattr(current_user, 'is_admin', False)
-    if current_user.id != tontine.creator_id and not is_admin:
+    if session['user_id'] != tontine.creator_id and not session.get('is_admin'):
         flash("Action non autorisée", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
-
-    try:
-        start_date = datetime.strptime(request.form.get('start_date'), '%Y-%m-%d')
-        end_date = datetime.strptime(request.form.get('end_date'), '%Y-%m-%d')
-    except (TypeError, ValueError):
-        flash("Dates invalides", "danger")
-        return redirect(url_for('tontine_detail', tontine_id=tontine_id))
-
+    
+    # Créer le nouveau cycle
+    start_date = datetime.strptime(request.form.get('start_date'), '%Y-%m-%d')
+    end_date = datetime.strptime(request.form.get('end_date'), '%Y-%m-%d')
+    
     new_cycle = TontineCycle(
         tontine_id=tontine.id,
         start_date=start_date,
         end_date=end_date
     )
-
+    
     db.session.add(new_cycle)
     db.session.commit()
 
@@ -2174,26 +1967,20 @@ def create_cycle(tontine_id):
 def post_select_beneficiary():
     cycle_id = request.form.get('cycle_id')
     beneficiary_id = request.form.get('beneficiary_id')
+    amount_received = float(request.form.get('amount_received'))
     
-    try:
-        amount_received = float(request.form.get('amount_received'))
-    except (TypeError, ValueError):
-        flash("Montant invalide", "danger")
-        return redirect(url_for('dashboard'))
-
     cycle = TontineCycle.query.get_or_404(cycle_id)
     tontine = Tontine.query.get_or_404(cycle.tontine_id)
-
-    # Vérifier les permissions avec current_user
-    is_admin = getattr(current_user, 'is_admin', False)
-    if current_user.id != tontine.creator_id and not is_admin:
+    
+    # Vérifier les permissions
+    if session['user_id'] != tontine.creator_id and not session.get('is_admin'):
         flash("Action non autorisée", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine.id))
-
+    
     # Mettre à jour le cycle
     cycle.beneficiary_id = beneficiary_id
     cycle.is_completed = True
-
+    
     # Créer une transaction pour le bénéficiaire
     beneficiary_wallet = Wallet.query.filter_by(user_id=beneficiary_id).first()
     if beneficiary_wallet:
@@ -2207,7 +1994,7 @@ def post_select_beneficiary():
         )
         beneficiary_wallet.balance += amount_received
         db.session.add(transaction)
-
+    
     db.session.commit()
     flash("Bénéficiaire sélectionné avec succès", "success")
     return redirect(url_for('tontine_detail', tontine_id=tontine.id))
@@ -2285,4 +2072,3 @@ def create_admin_command():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # <-- Récupère le port depuis l'environnement
     app.run(host="0.0.0.0", port=port)   
-
