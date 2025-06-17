@@ -46,30 +46,6 @@ login_manager.init_app(app)
 os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'profile_pictures'), exist_ok=True)
 
 # Modèles de données (à suivre...)
-
-class UserTontine(db.Model):
-    __tablename__ = 'user_tontine'
-    __table_args__ = {'extend_existing': True}
-
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    tontine_id = db.Column(db.Integer, db.ForeignKey('tontine.id'))
-    is_active = db.Column(db.Boolean, default=True)
-
-    user = db.relationship('User', back_populates='tontines')
-    tontine = db.relationship('Tontine', back_populates='members')
-    contributions = db.relationship('Contribution', back_populates='user_tontine')
-    joined_at = db.Column(db.DateTime, default=datetime.utcnow)  # Ajoutez cette ligne
-
-    @staticmethod
-    def is_member(user_id, tontine_id):
-        return db.session.query(
-            UserTontine.query.filter_by(
-                user_id=user_id,
-                tontine_id=tontine_id
-            ).exists()
-        ).scalar()
-
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     public_id = db.Column(db.String(50), unique=True)
@@ -90,15 +66,12 @@ class User(db.Model, UserMixin):
 
     @property
     def profile_picture_url(self):
-        profile = UserProfilePicture.query.filter_by(user_id=self.id, is_active=True).first()
-        if profile and profile.filename:
-            url = url_for('static', filename=f'uploads/profile_pictures/{profile.filename}')
-            current_app.logger.debug(f"Profile picture URL for user {self.id}: {url}")
-            return url
-        else:
-            url = url_for('static', filename='images/default-avatar.png')
-            current_app.logger.debug(f"Default avatar URL for user {self.id}: {url}")
-            return url
+        try:
+            profile = UserProfilePicture.query.filter_by(user_id=self.id, is_active=True).first()
+            filename = profile.filename if profile and profile.filename else 'images/default-avatar.png'
+            return url_for('static', filename=f'uploads/profile_pictures/{filename}') if profile else url_for('static', filename=filename)
+        except Exception:
+            return url_for('static', filename='images/default-avatar.png')
 
     def get_id(self):
         return str(self.id)
@@ -114,14 +87,21 @@ class User(db.Model, UserMixin):
     @property
     def is_anonymous(self):
         return False
+
     @property
     def unread_notifications(self):
-        return Notification.query.filter_by(user_id=self.id, read=False).count()
+        try:
+            return Notification.query.filter_by(user_id=self.id, read=False).count()
+        except SQLAlchemyError:
+            db.session.rollback()
+            return 0
 
-    @property
     def recent_notifications(self, limit=5):
-        return Notification.query.filter_by(user_id=self.id).order_by(Notification.created_at.desc()).limit(limit).all()
-
+        try:
+            return Notification.query.filter_by(user_id=self.id).order_by(Notification.created_at.desc()).limit(limit).all()
+        except SQLAlchemyError:
+            db.session.rollback()
+            return []
 
 
 class Wallet(db.Model):
