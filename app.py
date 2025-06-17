@@ -613,7 +613,7 @@ def register():
                 phone=phone
             )
             db.session.add(new_user)
-            db.session.flush()  # 👈 Assigne un id sans commit
+            db.session.flush()  # Assigne un ID à new_user sans commit
 
             new_wallet = Wallet(user_id=new_user.id)
             db.session.add(new_wallet)
@@ -621,10 +621,9 @@ def register():
             token = session.pop('invite_token', None)
             if token:
                 invitation = TontineInvitation.query.filter_by(token=token, accepted=False).first()
-                if invitation:
-                    if not TontineMember.query.filter_by(user_id=new_user.id, tontine_id=invitation.tontine_id).first():
-                        membership = TontineMember(user_id=new_user.id, tontine_id=invitation.tontine_id)
-                        db.session.add(membership)
+                if invitation and not TontineMember.query.filter_by(user_id=new_user.id, tontine_id=invitation.tontine_id).first():
+                    membership = TontineMember(user_id=new_user.id, tontine_id=invitation.tontine_id)
+                    db.session.add(membership)
                     invitation.accepted = True
 
             db.session.commit()
@@ -677,12 +676,13 @@ def notifications():
     # Marquer toutes les notifications comme lues
     Notification.query.filter_by(user_id=current_user.id, read=False).update({'read': True})
     db.session.commit()
-    
-    # Récupérer toutes les notifications
-    all_notifications = Notification.query.filter_by(user_id=current_user.id)\
+
+    # Récupérer toutes les notifications de l'utilisateur, triées par date décroissante
+    all_notifications = Notification.query.filter_by(user_id=current_user.id) \
         .order_by(Notification.created_at.desc()).all()
-    
+
     return render_template('notifications/list.html', notifications=all_notifications)
+
 
 @app.route('/notifications/read/<int:notification_id>', methods=['POST'])
 @login_required
@@ -957,7 +957,7 @@ def wallet_deposit():
             flash('Le montant doit être supérieur à zéro', 'danger')
             return redirect(url_for('wallet_deposit'))
 
-        user = User.query.get(session['user_id'])
+        user = User.query.get(current_user.id)
         transaction = update_wallet_balance(user.id, amount, 'deposit', description)
 
         flash(f'Dépôt de {amount:.2f} effectué avec succès. Référence: {transaction.reference}', 'success')
@@ -965,11 +965,10 @@ def wallet_deposit():
 
     return render_template('wallet/deposit.html')
 
-
 @app.route('/wallet/withdraw', methods=['GET', 'POST'])
 @login_required
 def wallet_withdraw():
-    user = User.query.get(session['user_id'])
+    user = User.query.get(current_user.id)
     wallet = Wallet.query.filter_by(user_id=user.id).first()
 
     if not wallet:
@@ -1004,23 +1003,23 @@ def wallet_withdraw():
 @login_required
 def tontines_list():
     search_query = request.args.get('q', '').strip()
-    
+
     # Tontines où l'utilisateur est membre
     user_memberships = UserTontine.query.filter_by(user_id=current_user.id).all()
     user_tontine_ids = [m.tontine_id for m in user_memberships]
-    
+
     # Demandes en attente
     pending_requests = JoinRequest.query.filter_by(
         user_id=current_user.id,
         status='pending'
     ).all()
     pending_request_ids = [r.tontine_id for r in pending_requests if r.tontine_id]
-    
+
     # Tontines à afficher (soit celles où on est membre, soit résultats de recherche)
     tontines = []
-    
+
     if search_query:
-        # Recherche par nom
+        # Recherche par nom (tontines actives seulement)
         tontines = Tontine.query.filter(
             Tontine.is_active == True,
             Tontine.name.ilike(f'%{search_query}%')
@@ -1030,7 +1029,7 @@ def tontines_list():
         tontines = Tontine.query.filter(
             Tontine.id.in_(user_tontine_ids)
         ).all()
-    
+
     return render_template(
         'tontines/list.html',
         tontines=tontines,
