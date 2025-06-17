@@ -96,12 +96,17 @@ class User(db.Model, UserMixin):
             db.session.rollback()
             return 0
 
-    def recent_notifications(self, limit=5):
+    
+    @property
+    def unread_notifications(self):
         try:
-            return Notification.query.filter_by(user_id=self.id).order_by(Notification.created_at.desc()).limit(limit).all()
-        except SQLAlchemyError:
+            return Notification.query.filter_by(user_id=self.id, read=False).count()
+        except SQLAlchemyError as e:
+            # Rollback pour sortir de l'état d'erreur
             db.session.rollback()
-            return []
+            current_app.logger.error(f"Erreur lecture notifications non lues: {e}")
+            return 0
+
 
 
 class Wallet(db.Model):
