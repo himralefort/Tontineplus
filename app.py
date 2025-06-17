@@ -337,6 +337,8 @@ class Notification(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     read = db.Column(db.Boolean, default=False)
     link = db.Column(db.String(200))  # Optionnel pour des liens cliquables
+    notification_type = db.Column(db.String(50))  # Nouveau champ pour le type
+    related_id = db.Column(db.Integer)  # ID de l'entité concernée (tontine_id, contribution_id, etc.)
 
     user = db.relationship('User', backref=db.backref('notifications', lazy='dynamic'))
 
@@ -393,31 +395,36 @@ def time_ago(value):
 # Enregistrer le filtre dans Jinja
 app.jinja_env.filters['time_ago'] = time_ago
 
-
-def send_notification(user_id, message, link=None):
-    """Crée et envoie une notification"""
+def send_notification(user_id, message, notification_type=None, link=None, related_id=None):
+    """Envoie une notification à un utilisateur"""
     try:
         notification = Notification(
             user_id=user_id,
             message=message,
+            notification_type=notification_type,
             link=link,
+            related_id=related_id,
             read=False
         )
         db.session.add(notification)
         db.session.commit()
         
-        # Envoi via Socket.IO si configuré
-        if socketio:
-            socketio.emit('new_notification', {
-                'user_id': user_id,
-                'message': message,
-                'link': link,
-                'unread_count': Notification.query.filter_by(user_id=user_id, read=False).count()
-            }, namespace='/notifications')
-            
+        # Envoi via Socket.IO pour une mise à jour en temps réel
+        socketio.emit('new_notification', {
+            'id': notification.id,
+            'message': message,
+            'type': notification_type,
+            'link': link,
+            'created_at': notification.created_at.isoformat(),
+            'unread_count': Notification.query.filter_by(user_id=user_id, read=False).count()
+        }, room=f'user_{user_id}')
+        
+        return True
     except Exception as e:
-        current_app.logger.error(f"Erreur notification: {str(e)}")
+        current_app.logger.error(f"Erreur lors de l'envoi de notification: {str(e)}")
         db.session.rollback()
+        return False
+
 
 def notify_tontine_members(tontine_id, message, exclude_user_id=None):
     """Envoie une notification à tous les membres d'une tontine"""
@@ -1831,15 +1838,16 @@ def campaign_donate(campaign_id):
 @app.route('/api/wallet/balance')
 @login_required
 def api_wallet_balance():
-    wallet = Wallet.query.filter_by(user_id=session['user_id']).first()
+    wallet = Wallet.query.filter_by(user_id=current_user.id).first()
     if not wallet:
         return jsonify({'error': 'Wallet not found'}), 404
     return jsonify({'balance': wallet.balance})
 
+
 @app.route('/api/wallet/transactions')
 @login_required
 def api_wallet_transactions():
-    wallet = Wallet.query.filter_by(user_id=session['user_id']).first()
+    wallet = Wallet.query.filter_by(user_id=current_user.id).first()
     if not wallet:
         return jsonify({'error': 'Wallet not found'}), 404
     
@@ -1869,17 +1877,16 @@ def remove_member(tontine_id):
         flash("ID utilisateur manquant", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
-    # Vérifier les permissions avec current_user (plus sûr que session['user_id'])
-    if current_user.id != tontine.creator_id and not session.get('is_admin'):
+    # Vérification des permissions
+    is_admin = getattr(current_user, 'is_admin', False)
+    if current_user.id != tontine.creator_id and not is_admin:
         flash("Action non autorisée", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
-    # Empêcher de retirer le créateur
     if int(user_id) == tontine.creator_id:
         flash("Impossible de retirer le créateur", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
-    # Supprimer le membre
     membership = UserTontine.query.filter_by(user_id=user_id, tontine_id=tontine.id).first()
     if membership:
         db.session.delete(membership)
@@ -1891,23 +1898,28 @@ def remove_member(tontine_id):
     return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
 
+
 @app.route('/tontine/<int:tontine_id>/edit', methods=['POST'])
 @login_required
 def edit_tontine(tontine_id):
     tontine = Tontine.query.get_or_404(tontine_id)
-    
+
     # Vérifier les permissions
-    if session['user_id'] != tontine.creator_id and not session.get('is_admin'):
+    is_admin = getattr(current_user, 'is_admin', False)
+    if current_user.id != tontine.creator_id and not is_admin:
         flash("Action non autorisée", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
-    
-    # Mettre à jour les informations
-    tontine.name = request.form.get('name')
-    tontine.description = request.form.get('description')
-    tontine.amount_per_member = float(request.form.get('amount'))
-    tontine.frequency = request.form.get('frequency')
-    tontine.max_members = int(request.form.get('max_members'))
-    
+
+    try:
+        tontine.name = request.form.get('name', tontine.name)
+        tontine.description = request.form.get('description', tontine.description)
+        tontine.amount_per_member = float(request.form.get('amount', tontine.amount_per_member))
+        tontine.frequency = request.form.get('frequency', tontine.frequency)
+        tontine.max_members = int(request.form.get('max_members', tontine.max_members))
+    except (ValueError, TypeError):
+        flash("Données invalides", "danger")
+        return redirect(url_for('tontine_detail', tontine_id=tontine_id))
+
     db.session.commit()
     flash("Tontine mise à jour avec succès", "success")
     return redirect(url_for('tontine_detail', tontine_id=tontine_id))
@@ -1916,29 +1928,33 @@ def edit_tontine(tontine_id):
 @login_required
 def close_tontine(tontine_id):
     tontine = Tontine.query.get_or_404(tontine_id)
-    
+
     # Vérifier les permissions
-    if session['user_id'] != tontine.creator_id and not session.get('is_admin'):
+    is_admin = getattr(current_user, 'is_admin', False)
+    if current_user.id != tontine.creator_id and not is_admin:
         flash("Action non autorisée", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
-    
+
     tontine.is_active = False
     db.session.commit()
     flash("Tontine clôturée avec succès", "success")
     return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
+
 @app.route('/tontine/<int:tontine_id>/reopen', methods=['POST'])
 @login_required
 def reopen_tontine(tontine_id):
     tontine = Tontine.query.get_or_404(tontine_id)
-    
+
     # Vérifier les permissions
-    if session['user_id'] != tontine.creator_id and not session.get('is_admin'):
+    is_admin = getattr(current_user, 'is_admin', False)
+    if current_user.id != tontine.creator_id and not is_admin:
         flash("Action non autorisée", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
-    
+
     tontine.is_active = True
     db.session.commit()
+
     flash("Tontine réouverte avec succès", "success")
     return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
@@ -1946,22 +1962,26 @@ def reopen_tontine(tontine_id):
 @login_required
 def create_cycle(tontine_id):
     tontine = Tontine.query.get_or_404(tontine_id)
-    
+
     # Vérifier les permissions
-    if session['user_id'] != tontine.creator_id and not session.get('is_admin'):
+    is_admin = getattr(current_user, 'is_admin', False)
+    if current_user.id != tontine.creator_id and not is_admin:
         flash("Action non autorisée", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
-    
-    # Créer le nouveau cycle
-    start_date = datetime.strptime(request.form.get('start_date'), '%Y-%m-%d')
-    end_date = datetime.strptime(request.form.get('end_date'), '%Y-%m-%d')
-    
+
+    try:
+        start_date = datetime.strptime(request.form.get('start_date'), '%Y-%m-%d')
+        end_date = datetime.strptime(request.form.get('end_date'), '%Y-%m-%d')
+    except (TypeError, ValueError):
+        flash("Dates invalides", "danger")
+        return redirect(url_for('tontine_detail', tontine_id=tontine_id))
+
     new_cycle = TontineCycle(
         tontine_id=tontine.id,
         start_date=start_date,
         end_date=end_date
     )
-    
+
     db.session.add(new_cycle)
     db.session.commit()
 
@@ -1981,20 +2001,26 @@ def create_cycle(tontine_id):
 def post_select_beneficiary():
     cycle_id = request.form.get('cycle_id')
     beneficiary_id = request.form.get('beneficiary_id')
-    amount_received = float(request.form.get('amount_received'))
     
+    try:
+        amount_received = float(request.form.get('amount_received'))
+    except (TypeError, ValueError):
+        flash("Montant invalide", "danger")
+        return redirect(url_for('dashboard'))
+
     cycle = TontineCycle.query.get_or_404(cycle_id)
     tontine = Tontine.query.get_or_404(cycle.tontine_id)
-    
-    # Vérifier les permissions
-    if session['user_id'] != tontine.creator_id and not session.get('is_admin'):
+
+    # Vérifier les permissions avec current_user
+    is_admin = getattr(current_user, 'is_admin', False)
+    if current_user.id != tontine.creator_id and not is_admin:
         flash("Action non autorisée", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine.id))
-    
+
     # Mettre à jour le cycle
     cycle.beneficiary_id = beneficiary_id
     cycle.is_completed = True
-    
+
     # Créer une transaction pour le bénéficiaire
     beneficiary_wallet = Wallet.query.filter_by(user_id=beneficiary_id).first()
     if beneficiary_wallet:
@@ -2008,7 +2034,7 @@ def post_select_beneficiary():
         )
         beneficiary_wallet.balance += amount_received
         db.session.add(transaction)
-    
+
     db.session.commit()
     flash("Bénéficiaire sélectionné avec succès", "success")
     return redirect(url_for('tontine_detail', tontine_id=tontine.id))
