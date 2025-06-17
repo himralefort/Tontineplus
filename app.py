@@ -46,7 +46,29 @@ login_manager.init_app(app)
 os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'profile_pictures'), exist_ok=True)
 
 # Modèles de données (à suivre...)
+class UserTontine(db.Model):
+    __tablename__ = 'user_tontine'
+    __table_args__ = {'extend_existing': True}
 
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    tontine_id = db.Column(db.Integer, db.ForeignKey('tontine.id'))
+    is_active = db.Column(db.Boolean, default=True)
+
+    user = db.relationship('User', back_populates='tontines')
+    tontine = db.relationship('Tontine', back_populates='members')
+    contributions = db.relationship('Contribution', back_populates='user_tontine')
+    joined_at = db.Column(db.DateTime, default=datetime.utcnow)  # Ajoutez cette ligne
+
+    @staticmethod
+    def is_member(user_id, tontine_id):
+        return db.session.query(
+            UserTontine.query.filter_by(
+                user_id=user_id,
+                tontine_id=tontine_id
+            ).exists()
+        ).scalar()
+        
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     public_id = db.Column(db.String(50), unique=True)
