@@ -1482,7 +1482,6 @@ def select_beneficiary(cycle_id):
     
     flash(f"Bénéficiaire sélectionné avec succès ({amount} XOF transférés)", "success")
     return redirect(url_for('tontine_detail', tontine_id=tontine.id))
-
 @app.route('/tontines/create', methods=['GET', 'POST'])
 @login_required
 def tontine_create():
@@ -1500,7 +1499,7 @@ def tontine_create():
             frequency=frequency,
             start_date=datetime.utcnow(),
             max_members=max_members,
-            creator_id=session['user_id']
+            creator_id=current_user.id
         )
         
         db.session.add(new_tontine)
@@ -1508,7 +1507,7 @@ def tontine_create():
         
         # Ajouter le créateur comme membre
         user_tontine = UserTontine(
-            user_id=session['user_id'],
+            user_id=current_user.id,
             tontine_id=new_tontine.id
         )
         db.session.add(user_tontine)
