@@ -46,6 +46,7 @@ login_manager.init_app(app)
 os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'profile_pictures'), exist_ok=True)
 
 # Modèles de données (à suivre...)
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     public_id = db.Column(db.String(50), unique=True)
@@ -66,12 +67,15 @@ class User(db.Model, UserMixin):
 
     @property
     def profile_picture_url(self):
-        try:
-            profile = UserProfilePicture.query.filter_by(user_id=self.id, is_active=True).first()
-            filename = profile.filename if profile and profile.filename else 'images/default-avatar.png'
-            return url_for('static', filename=f'uploads/profile_pictures/{filename}') if profile else url_for('static', filename=filename)
-        except Exception:
-            return url_for('static', filename='images/default-avatar.png')
+        profile = UserProfilePicture.query.filter_by(user_id=self.id, is_active=True).first()
+        if profile and profile.filename:
+            url = url_for('static', filename=f'uploads/profile_pictures/{profile.filename}')
+            current_app.logger.debug(f"Profile picture URL for user {self.id}: {url}")
+            return url
+        else:
+            url = url_for('static', filename='images/default-avatar.png')
+            current_app.logger.debug(f"Default avatar URL for user {self.id}: {url}")
+            return url
 
     def get_id(self):
         return str(self.id)
@@ -90,23 +94,10 @@ class User(db.Model, UserMixin):
 
     @property
     def unread_notifications(self):
-        try:
-            return Notification.query.filter_by(user_id=self.id, read=False).count()
-        except SQLAlchemyError:
-            db.session.rollback()
-            return 0
+        return Notification.query.filter_by(user_id=self.id, read=False).count()
 
-    
-    @property
-    def unread_notifications(self):
-        try:
-            return Notification.query.filter_by(user_id=self.id, read=False).count()
-        except SQLAlchemyError as e:
-            # Rollback pour sortir de l'état d'erreur
-            db.session.rollback()
-            current_app.logger.error(f"Erreur lecture notifications non lues: {e}")
-            return 0
-
+    def recent_notifications(self, limit=5):
+        return Notification.query.filter_by(user_id=self.id).order_by(Notification.created_at.desc()).limit(limit).all()
 
 
 class Wallet(db.Model):
