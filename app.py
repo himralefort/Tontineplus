@@ -1551,17 +1551,18 @@ def add_member(tontine_id):
 
     return render_template('tontines/add_member.html', tontine=tontine)
 
-@app.route('/tontines/<int:tontine_id>/join', methods=['GET'])
+@app.route('/tontine/<int:tontine_id>/join', methods=['GET'])
 @login_required
 def tontine_join(tontine_id):
     tontine = Tontine.query.get_or_404(tontine_id)
 
-    if tontine.is_full:
-        flash("La tontine est déjà complète.", "warning")
+    # Vérification supplémentaire
+    if UserTontine.is_member(current_user.id, tontine_id):
+        flash("Vous êtes déjà membre de cette tontine.", 'info')
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
-    if UserTontine.is_member(current_user.id, tontine_id):
-        flash("Vous êtes déjà membre de cette tontine.", "info")
+    if tontine.is_full:
+        flash("La tontine est déjà complète.", 'warning')
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
     new_membership = UserTontine(
@@ -1571,7 +1572,7 @@ def tontine_join(tontine_id):
     db.session.add(new_membership)
     db.session.commit()
 
-    flash("Vous avez rejoint la tontine avec succès !", "success")
+    flash("Vous avez rejoint la tontine avec succès !", 'success')
     return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
 
