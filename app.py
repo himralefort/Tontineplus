@@ -1550,17 +1550,14 @@ def add_member(tontine_id):
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
     return render_template('tontines/add_member.html', tontine=tontine)
-
-app.route('/tontines/<int:tontine_id>/join')
+@app.route('/tontines/<int:tontine_id>/join')
 @login_required
 def tontine_join(tontine_id):
     tontine = Tontine.query.get_or_404(tontine_id)
     
-    user_id = session['user_id']  # Accès sûr maintenant grâce au décorateur
-
     # Vérifier si l'utilisateur est déjà membre
     existing_membership = UserTontine.query.filter_by(
-        user_id=user_id,
+        user_id=session['user_id'],
         tontine_id=tontine.id
     ).first()
     
@@ -1576,7 +1573,7 @@ def tontine_join(tontine_id):
     
     # Ajouter l'utilisateur à la tontine
     new_membership = UserTontine(
-        user_id=user_id,
+        user_id=session['user_id'],
         tontine_id=tontine.id
     )
     db.session.add(new_membership)
@@ -1584,7 +1581,6 @@ def tontine_join(tontine_id):
     
     flash('Vous avez rejoint la tontine avec succès!', 'success')
     return redirect(url_for('tontine_detail', tontine_id=tontine.id))
-    
 
 @app.route('/tontines/<int:tontine_id>/invite', methods=['GET', 'POST'])
 @login_required
