@@ -1550,37 +1550,30 @@ def add_member(tontine_id):
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
     return render_template('tontines/add_member.html', tontine=tontine)
-@app.route('/tontines/<int:tontine_id>/join')
+
+@app.route('/tontines/<int:tontine_id>/join', methods=['GET'])
 @login_required
 def tontine_join(tontine_id):
     tontine = Tontine.query.get_or_404(tontine_id)
-    
-    # Vérifier si l'utilisateur est déjà membre
-    existing_membership = UserTontine.query.filter_by(
-        user_id=session['user_id'],
-        tontine_id=tontine.id
-    ).first()
-    
-    if existing_membership:
-        flash('Vous êtes déjà membre de cette tontine', 'warning')
-        return redirect(url_for('tontine_detail', tontine_id=tontine.id))
-    
-    # Vérifier si la tontine est pleine
-    current_members = UserTontine.query.filter_by(tontine_id=tontine.id).count()
-    if current_members >= tontine.max_members:
-        flash('Cette tontine a atteint son nombre maximum de membres', 'danger')
-        return redirect(url_for('tontine_detail', tontine_id=tontine.id))
-    
-    # Ajouter l'utilisateur à la tontine
+
+    if tontine.is_full:
+        flash("La tontine est déjà complète.", "warning")
+        return redirect(url_for('tontine_detail', tontine_id=tontine_id))
+
+    if UserTontine.is_member(current_user.id, tontine_id):
+        flash("Vous êtes déjà membre de cette tontine.", "info")
+        return redirect(url_for('tontine_detail', tontine_id=tontine_id))
+
     new_membership = UserTontine(
-        user_id=session['user_id'],
-        tontine_id=tontine.id
+        user_id=current_user.id,
+        tontine_id=tontine_id
     )
     db.session.add(new_membership)
     db.session.commit()
-    
-    flash('Vous avez rejoint la tontine avec succès!', 'success')
-    return redirect(url_for('tontine_detail', tontine_id=tontine.id))
+
+    flash("Vous avez rejoint la tontine avec succès !", "success")
+    return redirect(url_for('tontine_detail', tontine_id=tontine_id))
+
 
 @app.route('/tontines/<int:tontine_id>/invite', methods=['GET', 'POST'])
 @login_required
