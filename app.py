@@ -1220,11 +1220,13 @@ def handle_notification_connect():
     if current_user.is_authenticated:
         join_room(f'user_{current_user.id}')
 
+from flask_login import current_user
+from datetime import datetime, timedelta
 
 @app.route('/tontines/<int:tontine_id>')
 def tontine_detail(tontine_id):
     tontine = Tontine.query.get_or_404(tontine_id)
-    user_id = session.get('user_id')
+    user_id = current_user.id if current_user.is_authenticated else None
 
     # Vérifier si l'utilisateur est membre
     is_member = False
@@ -1233,8 +1235,7 @@ def tontine_detail(tontine_id):
 
     # Vérifier si l'utilisateur est le créateur ou admin
     is_creator = user_id == tontine.creator_id
-    user = User.query.get(user_id) if user_id else None
-    is_admin = getattr(user, 'admin', False)
+    is_admin = current_user.admin if current_user.is_authenticated else False
 
     # Récupérer les membres avec leurs contributions
     memberships = UserTontine.query.filter_by(tontine_id=tontine.id).all()
@@ -1316,7 +1317,7 @@ def tontine_detail(tontine_id):
         is_member=is_member,
         is_creator=is_creator,
         is_admin=is_admin,
-        current_user=current_user,  # Utilisez current_user de Flask-Login
+        current_user=current_user,
         creator=creator,
         transactions=transactions,
         next_cycle_start=next_cycle_start,
@@ -1326,6 +1327,7 @@ def tontine_detail(tontine_id):
         total_amount=total_amount,
         total_collected=total_collected
     )
+
 
 
 @app.route('/tontine/<int:tontine_id>/pay', methods=['POST'])
