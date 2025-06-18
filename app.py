@@ -1615,28 +1615,39 @@ def tontine_accept_invite(token):
     return redirect(url_for('tontine_detail', tontine_id=invitation.tontine_id))
 
 
-
-from flask_login import login_required, current_user
-
 @app.route('/campaigns')
 @login_required
 def campaigns_list():
-    # Campagnes créées par l'utilisateur
-    user_campaigns = FundraisingCampaign.query.filter_by(creator_id=current_user.id, is_active=True).all()
+    try:
+        user_campaigns = FundraisingCampaign.query.filter_by(
+            creator_id=current_user.id,
+            is_active=True
+        ).all()
+    except Exception as e:
+        flash("Erreur lors du chargement des campagnes.", "danger")
+        user_campaigns = []
 
     return render_template('campaigns/list.html', campaigns=user_campaigns)
-
 
 
 @app.route('/campaigns/<int:campaign_id>')
 def campaign_detail(campaign_id):
     campaign = FundraisingCampaign.query.get_or_404(campaign_id)
-    donations = Donation.query.filter_by(campaign_id=campaign.id, status='completed')\
-        .order_by(Donation.created_at.desc()).all()
+
+    donations = Donation.query.filter_by(
+        campaign_id=campaign.id,
+        status='completed'
+    ).order_by(Donation.created_at.desc()).all()
+
     progress = (campaign.current_amount / campaign.target_amount) * 100 if campaign.target_amount > 0 else 0
     creator = User.query.get(campaign.creator_id)
 
-    days_remaining = (campaign.end_date - datetime.utcnow()).days if campaign.end_date else None
+    days_remaining = None
+    if campaign.end_date:
+        try:
+            days_remaining = (campaign.end_date - datetime.utcnow()).days
+        except Exception:
+            days_remaining = None
 
     return render_template(
         'campaigns/detail.html',
@@ -1719,16 +1730,25 @@ def tontine_manage(tontine_id):
         flash("Une erreur est survenue lors de la gestion de la tontine", "danger")
         return redirect(url_for('my_tontines'))
 
-
 @app.route('/campaigns/create', methods=['GET', 'POST'])
 @login_required
 def campaign_create():
     if request.method == 'POST':
         title = request.form.get('title')
         description = request.form.get('description')
-        target_amount = float(request.form.get('target_amount'))
+
+        try:
+            target_amount = float(request.form.get('target_amount'))
+        except (ValueError, TypeError):
+            flash("Le montant cible est invalide.", "danger")
+            return redirect(url_for('campaign_create'))
+
         end_date_str = request.form.get('end_date')
-        end_date = datetime.strptime(end_date_str, '%Y-%m-%d') if end_date_str else None
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d') if end_date_str else None
+        except ValueError:
+            flash("Date de fin invalide.", "danger")
+            return redirect(url_for('campaign_create'))
         
         # Gestion de l'image
         image_url = None
@@ -1737,14 +1757,16 @@ def campaign_create():
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 unique_filename = f"{uuid.uuid4()}_{filename}"
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                file.save(file_path)
                 image_url = url_for('static', filename=f'uploads/{unique_filename}')
         
+        # Création de la campagne
         new_campaign = FundraisingCampaign(
             title=title,
             description=description,
             target_amount=target_amount,
-            creator_id=session['user_id'],
+            creator_id=current_user.id,
             end_date=end_date,
             image_url=image_url
         )
@@ -1757,24 +1779,30 @@ def campaign_create():
     
     return render_template('campaigns/create.html')
 
+
 @app.route('/campaigns/<int:campaign_id>/donate', methods=['GET', 'POST'])
 @login_required
 def campaign_donate(campaign_id):
     campaign = FundraisingCampaign.query.get_or_404(campaign_id)
-    user = User.query.get(session['user_id'])
+    user = current_user  # Utilisation de Flask-Login
     wallet = Wallet.query.filter_by(user_id=user.id).first()
     
     if request.method == 'POST':
-        amount = float(request.form.get('amount'))
+        try:
+            amount = float(request.form.get('amount'))
+        except (ValueError, TypeError):
+            flash('Montant invalide', 'danger')
+            return redirect(url_for('campaign_donate', campaign_id=campaign.id))
+
         message = request.form.get('message')
         is_anonymous = request.form.get('is_anonymous') == 'on'
-        payment_method = 'wallet'  # Pour simplifier, on suppose que le paiement se fait via le portefeuille
+        payment_method = 'wallet'
         
         if amount <= 0:
             flash('Le montant doit être supérieur à zéro', 'danger')
             return redirect(url_for('campaign_donate', campaign_id=campaign.id))
         
-        if wallet.balance < amount:
+        if wallet is None or wallet.balance < amount:
             flash('Solde insuffisant dans votre portefeuille', 'danger')
             return redirect(url_for('campaign_donate', campaign_id=campaign.id))
         
@@ -1794,16 +1822,17 @@ def campaign_donate(campaign_id):
         # Débiter le portefeuille
         transaction = update_wallet_balance(user.id, amount, 'withdrawal', f'Don à la campagne: {campaign.title}')
         
-        # Mettre à jour le montant de la campagne
+        # Mettre à jour la campagne
         campaign.current_amount += amount
         new_donation.status = 'completed'
         
         db.session.commit()
         
-        flash(f'Merci pour votre don de {amount}!', 'success')
+        flash(f'Merci pour votre don de {amount:.2f} €!', 'success')
         return redirect(url_for('campaign_detail', campaign_id=campaign.id))
     
     return render_template('campaigns/donate.html', campaign=campaign, wallet=wallet)
+
 
 # API pour le portefeuille
 @app.route('/api/wallet/balance')
