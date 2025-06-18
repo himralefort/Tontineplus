@@ -1917,20 +1917,26 @@ def reopen_tontine(tontine_id):
     flash("Tontine réouverte avec succès", "success")
     return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
+from flask_login import login_required, current_user
+
 @app.route('/tontine/<int:tontine_id>/create_cycle', methods=['POST'])
 @login_required
 def create_cycle(tontine_id):
     tontine = Tontine.query.get_or_404(tontine_id)
     
     # Vérifier les permissions
-    if session['user_id'] != tontine.creator_id and not session.get('is_admin'):
+    if current_user.id != tontine.creator_id and not getattr(current_user, 'is_admin', False):
         flash("Action non autorisée", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
     
     # Créer le nouveau cycle
-    start_date = datetime.strptime(request.form.get('start_date'), '%Y-%m-%d')
-    end_date = datetime.strptime(request.form.get('end_date'), '%Y-%m-%d')
-    
+    try:
+        start_date = datetime.strptime(request.form.get('start_date'), '%Y-%m-%d')
+        end_date = datetime.strptime(request.form.get('end_date'), '%Y-%m-%d')
+    except (ValueError, TypeError):
+        flash("Dates invalides. Veuillez entrer une date valide au format AAAA-MM-JJ.", "danger")
+        return redirect(url_for('tontine_detail', tontine_id=tontine_id))
+
     new_cycle = TontineCycle(
         tontine_id=tontine.id,
         start_date=start_date,
@@ -1949,6 +1955,7 @@ def create_cycle(tontine_id):
 
     flash("Nouveau cycle créé avec succès", "success")
     return redirect(url_for('tontine_detail', tontine_id=tontine_id))
+
 
 
 @app.route('/tontine/select_beneficiary', methods=['POST'])
