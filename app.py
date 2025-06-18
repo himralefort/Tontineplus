@@ -1329,20 +1329,17 @@ def tontine_detail(tontine_id):
     )
 
 
-
 @app.route('/tontine/<int:tontine_id>/pay', methods=['POST'])
 @login_required
 def make_payment(tontine_id):
     tontine = Tontine.query.get_or_404(tontine_id)
-    user_id = session['user_id']
+    user_id = current_user.id  # ✅ remplacement sûr
     
-    # Vérifier que l'utilisateur est membre
     membership = UserTontine.query.filter_by(user_id=user_id, tontine_id=tontine.id).first()
     if not membership:
         flash("Vous n'êtes pas membre de cette tontine", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
     
-    # Trouver le cycle actif
     current_cycle = TontineCycle.query.filter_by(
         tontine_id=tontine.id,
         is_completed=False
@@ -1352,7 +1349,6 @@ def make_payment(tontine_id):
         flash("Aucun cycle actif pour cette tontine", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
     
-    # Vérifier si l'utilisateur a déjà payé pour ce cycle
     existing_payment = Contribution.query.filter_by(
         user_id=user_id,
         cycle_id=current_cycle.id
@@ -1362,13 +1358,11 @@ def make_payment(tontine_id):
         flash("Vous avez déjà payé pour ce cycle", "info")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
     
-    # Effectuer le paiement
     wallet = Wallet.query.filter_by(user_id=user_id).first()
     if not wallet or wallet.balance < tontine.amount_per_member:
         flash("Solde insuffisant dans votre portefeuille", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
     
-    # Créer la contribution
     new_contribution = Contribution(
         user_id=user_id,
         cycle_id=current_cycle.id,
@@ -1380,8 +1374,7 @@ def make_payment(tontine_id):
         paid_at=datetime.utcnow()
     )
     
-    # Mettre à jour le portefeuille
-    transaction = update_wallet_balance(
+    update_wallet_balance(
         user_id,
         tontine.amount_per_member,
         'withdrawal',
@@ -1391,7 +1384,6 @@ def make_payment(tontine_id):
     db.session.add(new_contribution)
     db.session.commit()
 
-    # ✅ Notifications
     send_notification(
         user_id,
         f"Paiement de {tontine.amount_per_member} XOF effectué pour la tontine {tontine.name}"
@@ -1406,23 +1398,20 @@ def make_payment(tontine_id):
     flash("Paiement effectué avec succès", "success")
     return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
-
 @app.route('/tontine/<int:cycle_id>/select_beneficiary', methods=['POST'])
 @login_required
 def select_beneficiary(cycle_id):
     cycle = TontineCycle.query.get_or_404(cycle_id)
     tontine = Tontine.query.get_or_404(cycle.tontine_id)
-    
-    # Vérifier les permissions
-    if session['user_id'] != tontine.creator_id and not session.get('is_admin'):
+
+    if current_user.id != tontine.creator_id and not session.get('is_admin'):
         flash("Action non autorisée", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine.id))
     
+    selection_method = request.form.get('selection_method', 'manual')
     beneficiary_id = request.form.get('beneficiary_id')
-    selection_method = request.form.get('selection_method', 'manual')  # 'manual' ou 'random'
-    
+
     if selection_method == 'random':
-        # Sélection aléatoire parmi les membres ayant payé
         paid_members = db.session.query(UserTontine.user_id)\
             .join(Contribution, Contribution.user_tontine_id == UserTontine.id)\
             .filter(
@@ -1436,28 +1425,25 @@ def select_beneficiary(cycle_id):
             return redirect(url_for('tontine_detail', tontine_id=tontine.id))
         
         beneficiary_id = random.choice(paid_members)[0]
-    
-    # Vérifier que le bénéficiaire a payé pour ce cycle
+
     has_paid = Contribution.query.filter_by(
         user_id=beneficiary_id,
         cycle_id=cycle.id,
         status='paid'
     ).first() is not None
-    
+
     if not has_paid:
         flash("Le bénéficiaire doit avoir payé pour ce cycle", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine.id))
     
-    # Mettre à jour le cycle
     cycle.beneficiary_id = beneficiary_id
     cycle.is_completed = True
     
-    # Créditer le bénéficiaire
-    amount = tontine.amount_per_member * len([m for m in tontine.members])
+    amount = tontine.amount_per_member * len(tontine.members)
     beneficiary_wallet = Wallet.query.filter_by(user_id=beneficiary_id).first()
     
     if beneficiary_wallet:
-        transaction = update_wallet_balance(
+        update_wallet_balance(
             beneficiary_id,
             amount,
             'deposit',
@@ -1468,6 +1454,7 @@ def select_beneficiary(cycle_id):
     
     flash(f"Bénéficiaire sélectionné avec succès ({amount} XOF transférés)", "success")
     return redirect(url_for('tontine_detail', tontine_id=tontine.id))
+
 
 @app.route('/tontines/create', methods=['GET', 'POST'])
 @login_required
