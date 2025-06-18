@@ -727,19 +727,19 @@
                 
                 <!-- Join Button or Member Status -->
                 {% if not is_member and tontine.is_active and tontine.max_members > memberships|length %}
-                <div class="d-grid">
-                    <a href="{{ url_for('tontine_join', tontine_id=tontine.id) }}" class="btn btn-neon py-3 fw-bold">
-                        <i class="bi bi-arrow-right-circle me-2"></i>Rejoindre cette tontine
-                    </a>
-                </div>
-                {% elif is_member %}
-                <div class="alert alert-success d-flex align-items-center">
-                    <i class="bi bi-check-circle-fill me-2 fs-4"></i>
-                    <div>
-                        <h6 class="mb-0">Vous êtes membre de cette tontine</h6>
-                        <small>Prochain cycle: {{ next_cycle_start|format_date('short') if next_cycle_start else "Aucun cycle programmé" }}</small>
+                    <div class="d-grid">
+                        <a href="{{ url_for('tontine_join', tontine_id=tontine.id) }}" class="btn btn-neon py-3 fw-bold">
+                            <i class="bi bi-arrow-right-circle me-2"></i>Rejoindre cette tontine
+                        </a>
                     </div>
-                </div>
+                {% elif is_member %}
+                    <div class="alert alert-success d-flex align-items-center">
+                        <i class="bi bi-check-circle-fill me-2 fs-4"></i>
+                        <div>
+                            <h6 class="mb-0">Vous êtes membre de cette tontine</h6>
+                            <small>Prochain cycle: {{ next_cycle_start|format_date('short') if next_cycle_start else "Aucun cycle programmé" }}</small>
+                        </div>
+                    </div>
                 {% endif %}
             </div>
             
