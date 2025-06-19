@@ -1884,26 +1884,31 @@ def remove_member(tontine_id):
 
     return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
-
 @app.route('/tontine/<int:tontine_id>/edit', methods=['POST'])
 @login_required
 def edit_tontine(tontine_id):
     tontine = Tontine.query.get_or_404(tontine_id)
-    
-    # Vérifier les permissions
-    if session['user_id'] != tontine.creator_id and not session.get('is_admin'):
+
+    # Vérifier les permissions avec current_user
+    if current_user.id != tontine.creator_id and not session.get('is_admin'):
         flash("Action non autorisée", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
-    
-    # Mettre à jour les informations
-    tontine.name = request.form.get('name')
-    tontine.description = request.form.get('description')
-    tontine.amount_per_member = float(request.form.get('amount'))
-    tontine.frequency = request.form.get('frequency')
-    tontine.max_members = int(request.form.get('max_members'))
-    
-    db.session.commit()
-    flash("Tontine mise à jour avec succès", "success")
+
+    try:
+        # Mettre à jour les informations
+        tontine.name = request.form.get('name')
+        tontine.description = request.form.get('description')
+        tontine.amount_per_member = float(request.form.get('amount'))
+        tontine.frequency = request.form.get('frequency')
+        tontine.max_members = int(request.form.get('max_members'))
+
+        db.session.commit()
+        flash("Tontine mise à jour avec succès", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash("Une erreur est survenue lors de la mise à jour.", "danger")
+        app.logger.error(f"Erreur mise à jour tontine: {e}")
+
     return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
 @app.route('/tontine/<int:tontine_id>/close', methods=['POST'])
@@ -1912,7 +1917,7 @@ def close_tontine(tontine_id):
     tontine = Tontine.query.get_or_404(tontine_id)
     
     # Vérifier les permissions
-    if session['user_id'] != tontine.creator_id and not session.get('is_admin'):
+    if current_user.id != tontine.creator_id and not session.get('is_admin'):
         flash("Action non autorisée", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
     
@@ -1921,13 +1926,14 @@ def close_tontine(tontine_id):
     flash("Tontine clôturée avec succès", "success")
     return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
+
 @app.route('/tontine/<int:tontine_id>/reopen', methods=['POST'])
 @login_required
 def reopen_tontine(tontine_id):
     tontine = Tontine.query.get_or_404(tontine_id)
     
     # Vérifier les permissions
-    if session['user_id'] != tontine.creator_id and not session.get('is_admin'):
+    if current_user.id != tontine.creator_id and not session.get('is_admin'):
         flash("Action non autorisée", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
     
@@ -1936,7 +1942,6 @@ def reopen_tontine(tontine_id):
     flash("Tontine réouverte avec succès", "success")
     return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
-from flask_login import login_required, current_user
 
 @app.route('/tontine/<int:tontine_id>/create_cycle', methods=['POST'])
 @login_required
