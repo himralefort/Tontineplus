@@ -59,10 +59,6 @@
                     <div class="card-body text-center py-5">
                         <i class="bi bi-collection fs-1 text-muted"></i>
                         <h5 class="mt-3">Aucune collecte disponible pour le moment</h5>
-                        {% if 'user_id' not in session %}
-                        <p class="text-muted">Connectez-vous pour créer une collecte</p>
-                        <a href="{{ url_for('login') }}" class="btn btn-primary">Se connecter</a>
-                        {% endif %}
                     </div>
                 </div>
             </div>
