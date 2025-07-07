@@ -1456,7 +1456,11 @@ def select_beneficiary(cycle_id):
     return redirect(url_for('tontine_detail', tontine_id=tontine.id))
 
 
-@app.route('/tontines/create', methods=['GET', 'POST'])
+from flask_login import login_required, current_user
+from flask import request, redirect, url_for, flash, render_template
+from datetime import datetime
+
+@app.route('/tontines/create', methods=['GET', 'POST']) 
 @login_required
 def tontine_create():
     if request.method == 'POST':
@@ -1473,15 +1477,14 @@ def tontine_create():
             frequency=frequency,
             start_date=datetime.utcnow(),
             max_members=max_members,
-            creator_id=session['user_id']
+            creator_id=current_user.id  # ✅ Correction ici
         )
         
         db.session.add(new_tontine)
         db.session.commit()
         
-        # Ajouter le créateur comme membre
         user_tontine = UserTontine(
-            user_id=session['user_id'],
+            user_id=current_user.id,  # ✅ Correction ici
             tontine_id=new_tontine.id
         )
         db.session.add(user_tontine)
@@ -1491,6 +1494,7 @@ def tontine_create():
         return redirect(url_for('tontine_detail', tontine_id=new_tontine.id))
     
     return render_template('tontines/create.html')
+
 
 @app.route('/contact')
 def contact():
