@@ -2134,6 +2134,10 @@ def create_admin_command():
     db.session.add(admin)
     db.session.commit()
     print(f'Administrateur {username} créé avec succès')
+    
+from flask_migrate import upgrade
+with app.app_context():
+    upgrade()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # <-- Récupère le port depuis l'environnement
