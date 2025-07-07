@@ -118,7 +118,15 @@ class User(db.Model, UserMixin):
         return Notification.query.filter_by(user_id=self.id).order_by(Notification.created_at.desc()).limit(limit).all()
 
 
-
+class ChatMessage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    tontine_id = db.Column(db.Integer, db.ForeignKey('tontine.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
+    user = db.relationship('User', backref='chat_messages')
+    tontine = db.relationship('Tontine', backref='chat_messages')
 
 class Wallet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -2036,35 +2044,55 @@ def post_select_beneficiary():
     db.session.commit()
     flash("Bénéficiaire sélectionné avec succès", "success")
     return redirect(url_for('tontine_detail', tontine_id=tontine.id))
-
-@app.route('/tontine/<int:tontine_id>/chat/history')
-@login_required
+# Route pour récupérer l'historique du chat
+@app.route('/tontines/<int:tontine_id>/chat')
 def get_chat_history(tontine_id):
-    # Implémentez cette fonction pour retourner l'historique des messages
-    # Exemple basique :
-    messages = []  # À remplacer par une requête à votre base de données
-    return jsonify(messages)
+    messages = ChatMessage.query.filter_by(tontine_id=tontine_id)\
+        .order_by(ChatMessage.timestamp.asc())\
+        .limit(100)\
+        .all()
+    return jsonify([{
+        'sender': msg.user.username,
+        'message': msg.content,
+        'timestamp': msg.timestamp.isoformat(),
+        'avatar': msg.user.profile_picture_url
+    } for msg in messages])
 
-# Handlers Socket.IO
+# Gestion des événements Socket.IO
 @socketio.on('join')
-def on_join(data):
-    room = data['room']
-    join_room(room)
-    send({
-        'sender': 'System',
-        'message': f"{data['username']} a rejoint le chat",
-        'timestamp': datetime.utcnow().isoformat()
-    }, to=room)
+def handle_join(data):
+    join_room(f"tontine_{data['room']}")
+    emit('status', {'msg': f"{data['username']} a rejoint la discussion"}, room=f"tontine_{data['room']}")
 
 @socketio.on('message')
 def handle_message(data):
-    room = data['room']
-    # Sauvegardez le message en base de données ici si nécessaire
-    send({
-        'sender': data['sender'],
+    # Sauvegarder le message en base de données
+    new_message = ChatMessage(
+        tontine_id=data['room'],
+        user_id=current_user.id,
+        content=data['message'],
+        timestamp=datetime.utcnow()
+    )
+    db.session.add(new_message)
+    db.session.commit()
+    
+    # Envoyer le message à tous les membres de la room
+    emit('new_message', {
+        'sender': current_user.username,
         'message': data['message'],
-        'timestamp': data['timestamp']
-    }, to=room)
+        'timestamp': datetime.utcnow().isoformat(),
+        'avatar': current_user.profile_picture_url,
+        'user_id': current_user.id
+    }, room=f"tontine_{data['room']}")
+    
+    # Envoyer une notification aux utilisateurs qui ne sont pas sur la page
+    emit('notification', {
+        'sender': current_user.username,
+        'tontine_id': data['room'],
+        'tontine_name': Tontine.query.get(data['room']).name,
+        'message': data['message'],
+        'timestamp': datetime.utcnow().isoformat()
+    }, broadcast=True, include_self=False)
 
 # Gestion des erreurs
 @app.errorhandler(404)
