@@ -11,7 +11,7 @@ from flask_migrate import Migrate
 import uuid
 import logging
 from functools import wraps
-from flask_socketio import SocketIO, join_room, leave_room, send
+from flask_socketio import SocketIO, join_room, leave_room, send, emit
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 from dotenv import load_dotenv
 from sqlalchemy.exc import SQLAlchemyError
