@@ -661,15 +661,29 @@ def login():
 @app.route('/notifications')
 @login_required
 def notifications():
-    # Marquer toutes les notifications comme lues
-    Notification.query.filter_by(user_id=current_user.id, read=False).update({'read': True})
-    db.session.commit()
-
-    # Récupérer toutes les notifications de l'utilisateur, triées par date décroissante
+    # Nombre de notifications par page
+    notifications_per_page = 10
+    
+    # Récupérer le numéro de page depuis les paramètres GET, défaut à 1
+    page = request.args.get('page', 1, type=int)
+    
+    # Si tu récupères toutes les notifications sous forme de liste (exemple)
     all_notifications = Notification.query.filter_by(user_id=current_user.id) \
         .order_by(Notification.created_at.desc()).all()
 
-    return render_template('notifications/list.html', notifications=all_notifications)
+    # Paginer les notifications manuellement
+    start = (page - 1) * notifications_per_page
+    end = start + notifications_per_page
+    notifications_paginated = all_notifications[start:end]
+
+    # Calculer le nombre total de pages
+    total_notifications = len(all_notifications)
+    total_pages = (total_notifications // notifications_per_page) + (1 if total_notifications % notifications_per_page > 0 else 0)
+
+    return render_template('notifications/list.html', 
+                           notifications=notifications_paginated, 
+                           page=page, 
+                           total_pages=total_pages)
     
 
 @app.route('/notifications/read/<int:notification_id>', methods=['POST'])
