@@ -1636,12 +1636,9 @@ def markdown_filter(text):
         return ''
     
     # Liste des balises et attributs autorisés
-    allowed_tags = bleach.sanitizer.ALLOWED_TAGS + [
-        'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-        'pre', 'code', 'blockquote', 'img', 'br',
-        'ul', 'ol', 'li', 'hr', 'table', 'thead',
-        'tbody', 'tr', 'th', 'td'
-    ]
+    allowed_tags = bleach.sanitizer.ALLOWED_TAGS | {
+        'p', 'pre', 'code', 'blockquote', 'ul', 'ol', 'li', 'strong', 'em', 'a', 'h1', 'h2', 'h3'
+    }
     
     allowed_attributes = {
         'a': ['href', 'title'],
