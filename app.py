@@ -1528,8 +1528,8 @@ def contact():
 def add_member(tontine_id):
     tontine = Tontine.query.get_or_404(tontine_id)
 
-    # Vérifie que l'utilisateur connecté est le créateur ou un admin (optionnel)
-    if session['user_id'] != tontine.creator_id and not session.get('is_admin'):
+    # Vérifie que l'utilisateur connecté est le créateur ou un admin
+    if current_user.id != tontine.creator_id and not getattr(current_user, 'is_admin', False):
         flash("Vous n'avez pas la permission d'ajouter des membres.", "danger")
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
@@ -1565,6 +1565,7 @@ def add_member(tontine_id):
         return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
     return render_template('tontines/add_member.html', tontine=tontine)
+
 
 @app.route('/tontine/<int:tontine_id>/join', methods=['GET'])
 @login_required
