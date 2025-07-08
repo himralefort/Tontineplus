@@ -217,27 +217,61 @@
         letter-spacing: 0.05em;
     }
 
-    /* Chat Styles */
-    .chat-wrapper {
+    /* Chat Styles - MODIFIED FOR FLOATING BUBBLE */
+    .chat-bubble-container {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 350px;
+        z-index: 1000;
         transition: all 0.3s ease;
-        max-height: 500px;
+    }
+
+    .chat-bubble {
+        border-radius: 16px;
         overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(var(--glass-blur));
+        -webkit-backdrop-filter: blur(var(--glass-blur));
+        border: 1px solid rgba(255, 255, 255, 0.18);
     }
 
-    .chat-wrapper.collapsed {
-        max-height: 0;
+    .chat-header {
+        padding: 12px 16px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
     }
 
-    .chat-container {
+    .chat-header h5 {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .chat-toggle {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+    }
+
+    .chat-body {
         height: 400px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-messages {
+        flex: 1;
         overflow-y: auto;
-        scroll-behavior: smooth;
+        padding: 16px;
         display: flex;
         flex-direction: column;
         gap: 12px;
-        padding: 16px;
-        background: rgba(255, 255, 255, 0.8);
-        border-radius: 16px;
     }
 
     .chat-message {
@@ -313,6 +347,37 @@
         color: rgba(255, 255, 255, 0.8);
     }
 
+    .chat-input-container {
+        padding: 12px;
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+        background: white;
+    }
+
+    .chat-input-group {
+        display: flex;
+    }
+
+    .chat-input {
+        flex: 1;
+        border-radius: 20px;
+        padding: 10px 15px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        outline: none;
+    }
+
+    .chat-send-btn {
+        margin-left: 8px;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        border: none;
+    }
+
     /* Typing indicator */
     .typing-indicator {
         display: flex;
@@ -350,9 +415,20 @@
     }
 
     /* Notification badge */
-    #chat-notification-badge {
-        top: 20px;
-        right: 20px;
+    .chat-notification-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: var(--danger-color);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: bold;
         animation: pulse 1.5s infinite;
     }
 
@@ -364,6 +440,12 @@
 
     .new-message {
         animation: messageIn 0.3s ease;
+    }
+
+    /* Draggable chat */
+    .chat-bubble.draggable {
+        cursor: move;
+        user-select: none;
     }
 
     /* Custom Scrollbar */
@@ -1078,40 +1160,35 @@
                     </li>
                 </ul>
             </div>
-            
-            <!-- Chat Section -->
-            <div class="glass-card p-0 overflow-hidden">
-                <div class="p-4 border-bottom d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold">Discussion</h5>
-                    <button id="toggle-chat" class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-chevron-down"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Chat Bubble -->
+<div class="chat-bubble-container">
+    <div class="chat-bubble draggable">
+        <div class="chat-header">
+            <h5>Discussion</h5>
+            <button class="chat-toggle">
+                <i class="bi bi-dash"></i>
+            </button>
+            <span class="chat-notification-badge" style="display: none;">0</span>
+        </div>
+        <div class="chat-body">
+            <div class="chat-messages" id="chat-container">
+                <!-- Messages will appear here -->
+            </div>
+            <div class="chat-input-container">
+                <div class="chat-input-group">
+                    <input type="text" class="chat-input" id="message-input" placeholder="Écrire un message..." autocomplete="off">
+                    <button class="chat-send-btn" id="send-button">
+                        <i class="bi bi-send-fill"></i>
                     </button>
-                </div>
-                <div class="chat-wrapper">
-                    <div id="chat-container" class="chat-container p-3">
-                        <!-- Messages will appear here -->
-                    </div>
-                    <div class="p-3 border-top bg-light">
-                        <div class="input-group">
-                            <input type="text" id="message-input" class="form-control form-control-modern" 
-                                   placeholder="Écrire un message..." autocomplete="off">
-                            <button class="btn btn-neon" id="send-button">
-                                <i class="bi bi-send-fill"></i>
-                            </button>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<!-- Notification Badge -->
-<span id="chat-notification-badge" class="position-fixed top-0 start-100 translate-middle badge rounded-pill bg-danger" 
-      style="display: none; z-index: 9999;">
-    <i class="bi bi-chat-fill"></i>
-    <span class="visually-hidden">Nouveaux messages</span>
-</span>
 
 <!-- Floating Action Button -->
 {% if current_user.id == tontine.creator_id or current_user.admin %}
@@ -1447,31 +1524,72 @@
         const chatContainer = document.getElementById('chat-container');
         const messageInput = document.getElementById('message-input');
         const sendButton = document.getElementById('send-button');
-        const toggleChat = document.getElementById('toggle-chat');
-        const chatWrapper = document.querySelector('.chat-wrapper');
-        const notificationBadge = document.getElementById('chat-notification-badge');
+        const chatToggle = document.querySelector('.chat-toggle');
+        const chatBubble = document.querySelector('.chat-bubble');
+        const chatBody = document.querySelector('.chat-body');
+        const notificationBadge = document.querySelector('.chat-notification-badge');
         let isChatCollapsed = false;
         let unreadMessages = 0;
+
+        // Make chat bubble draggable
+        let isDragging = false;
+        let offsetX, offsetY;
+
+        chatBubble.addEventListener('mousedown', (e) => {
+            // Only drag if clicking on the header
+            if (e.target.closest('.chat-header')) {
+                isDragging = true;
+                offsetX = e.clientX - chatBubble.getBoundingClientRect().left;
+                offsetY = e.clientY - chatBubble.getBoundingClientRect().top;
+                chatBubble.style.cursor = 'grabbing';
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            
+            const container = document.querySelector('.chat-bubble-container');
+            const containerRect = container.getBoundingClientRect();
+            const bubbleRect = chatBubble.getBoundingClientRect();
+            
+            let left = e.clientX - offsetX - containerRect.left;
+            let top = e.clientY - offsetY - containerRect.top;
+            
+            // Boundary checks
+            left = Math.max(0, Math.min(left, containerRect.width - bubbleRect.width));
+            top = Math.max(0, Math.min(top, containerRect.height - bubbleRect.height));
+            
+            chatBubble.style.left = `${left}px`;
+            chatBubble.style.top = `${top}px`;
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            chatBubble.style.cursor = 'move';
+        });
+
+        // Toggle chat collapse/expand
+        chatToggle.addEventListener('click', function() {
+            isChatCollapsed = !isChatCollapsed;
+            if (isChatCollapsed) {
+                chatBody.style.display = 'none';
+                chatToggle.innerHTML = '<i class="bi bi-plus"></i>';
+            } else {
+                chatBody.style.display = 'block';
+                chatToggle.innerHTML = '<i class="bi bi-dash"></i>';
+                unreadMessages = 0;
+                updateNotificationBadge();
+                // Scroll to bottom when expanding
+                setTimeout(() => {
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }, 100);
+            }
+        });
 
         // Rejoindre la room de discussion
         socket.emit('join', {
             room: room,
             username: "{{ current_user.username }}"
-        });
-
-        // Basculer l'état du chat (réduit/agrandi)
-        toggleChat.addEventListener('click', function() {
-            isChatCollapsed = !isChatCollapsed;
-            chatWrapper.classList.toggle('collapsed', isChatCollapsed);
-            toggleChat.innerHTML = isChatCollapsed ? 
-                '<i class="bi bi-chevron-up"></i>' : 
-                '<i class="bi bi-chevron-down"></i>';
-            
-            // Si on ouvre le chat, réinitialiser les notifications
-            if (!isChatCollapsed) {
-                unreadMessages = 0;
-                updateNotificationBadge();
-            }
         });
 
         // Recevoir un nouveau message
@@ -1480,10 +1598,12 @@
             
             const messageElement = createMessageElement(data, isCurrentUser);
             chatContainer.appendChild(messageElement);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
             
-            // Si le chat est réduit ou si ce n'est pas notre message, incrémenter les notifications
-            if (isChatCollapsed || !isCurrentUser) {
+            // Scroll to bottom if chat is expanded and it's our message or chat is not collapsed
+            if (!isChatCollapsed || isCurrentUser) {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            } else {
+                // Increment notification if chat is collapsed and it's not our message
                 unreadMessages++;
                 updateNotificationBadge();
             }
@@ -1537,7 +1657,7 @@
         // Créer un élément de message
         function createMessageElement(data, isCurrentUser) {
             const messageDiv = document.createElement('div');
-            messageDiv.className = `chat-message ${isCurrentUser ? 'message-sent' : 'message-received'} new-message`;
+            messageDiv.className = `chat-message ${isCurrentUser ? 'message-sent' : 'message-received'} new-message';
             
             const timestamp = new Date(data.timestamp);
             const timeString = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -1562,19 +1682,12 @@
         // Mettre à jour le badge de notification
         function updateNotificationBadge() {
             if (unreadMessages > 0) {
-                notificationBadge.style.display = 'block';
-                notificationBadge.innerHTML = `<i class="bi bi-chat-fill"></i> ${unreadMessages}`;
+                notificationBadge.style.display = 'flex';
+                notificationBadge.textContent = unreadMessages;
             } else {
                 notificationBadge.style.display = 'none';
             }
         }
-
-        // Cliquer sur le badge pour ouvrir le chat
-        notificationBadge.addEventListener('click', function() {
-            if (isChatCollapsed) {
-                toggleChat.click();
-            }
-        });
 
         // Charger l'historique du chat
         fetch(`/tontines/${room}/chat`)
