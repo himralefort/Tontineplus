@@ -2459,5 +2459,6 @@ def create_admin_command():
     
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # <-- Récupère le port depuis l'environnement
-    app.run(host="0.0.0.0", port=port)   
+    import os  # <-- Assurez-vous que 'os' est bien importé
+    port = int(os.environ.get("PORT", 5000))  # <-- Récupère le port depuis la variable d'environnement, sinon utilise 5000 par défaut
+    app.run(host="0.0.0.0", port=port)  # <-- Lance l'application Flask sur toutes les interfaces réseau
