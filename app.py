@@ -33,7 +33,7 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
 # ✅ Initialisation unique des extensions
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-socketio = SocketIO(app)
+socketio = SocketIO(app, async_mode='eventlet', cors_allowed_origins=[])
 
 # 🔐 Configuration login
 login_manager = LoginManager()
@@ -2459,6 +2459,5 @@ def create_admin_command():
     
 
 if __name__ == "__main__":
-    import os  # <-- Assurez-vous que 'os' est bien importé
-    port = int(os.environ.get("PORT", 5000))  # <-- Récupère le port depuis la variable d'environnement, sinon utilise 5000 par défaut
-    app.run(host="0.0.0.0", port=port)  # <-- Lance l'application Flask sur toutes les interfaces réseau
+    port = int(os.environ.get("PORT", 5000))  # Port par défaut = 5000
+    socketio.run(app, host="0.0.0.0", port=port)
