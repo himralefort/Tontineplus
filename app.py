@@ -2128,18 +2128,35 @@ def create_cycle(tontine_id):
 # Routes pour le forum
 @app.route('/forum')
 def forum_home():
-    categories = ForumCategory.query.filter_by(is_active=True).order_by(ForumCategory.order).all()
-    
-    # Derniers sujets actifs
-    recent_topics = ForumTopic.query.order_by(ForumTopic.updated_at.desc()).limit(5).all()
-    
-    # Sujets populaires
-    popular_topics = ForumTopic.query.order_by(ForumTopic.views.desc()).limit(5).all()
-    
+    # Exemple de données simulées (adapter à ta vraie structure)
+    categories = [
+        {
+            "slug": "investissements",
+            "name": "Investissements",
+            "description": "Discussion autour des investissements.",
+            "topics": [
+                {"slug": "topic1", "title": "Premier sujet", "updated_at": datetime(2025,7,8,10,0), "user": {"username": "alice", "profile_picture_url": "/static/alice.jpg"}},
+                {"slug": "topic2", "title": "Deuxième sujet", "updated_at": datetime(2025,7,7,9,0), "user": {"username": "bob", "profile_picture_url": "/static/bob.jpg"}},
+            ]
+        },
+        # autres catégories...
+    ]
+
+    # Trier les topics dans chaque catégorie par updated_at décroissant
+    for category in categories:
+        category["topics"] = sorted(category["topics"], key=lambda t: t["updated_at"], reverse=True)
+        category["topics_count"] = len(category["topics"])
+        category["last_topic"] = category["topics"][0] if category["topics"] else None
+
+    # Autres variables que tu passes au template
+    recent_topics = []  # préparer tes sujets récents
+    popular_topics = []  # préparer tes sujets populaires
+
     return render_template('forum/index.html',
-                         categories=categories,
-                         recent_topics=recent_topics,
-                         popular_topics=popular_topics)
+                           categories=categories,
+                           recent_topics=recent_topics,
+                           popular_topics=popular_topics)
+
 
 @app.route('/forum/<category_slug>')
 def forum_category(category_slug):
