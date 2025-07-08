@@ -19,6 +19,7 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from dotenv import load_dotenv
 from sqlalchemy.exc import SQLAlchemyError
 from markupsafe import Markup
+from slugify import slugify
 
 # Charger les variables d'environnement depuis le fichier .env
 load_dotenv()
@@ -2212,6 +2213,7 @@ def forum_topic(category_slug, topic_slug):
 def new_topic():
     if request.method == 'POST':
         title = request.form.get('title')
+        slug = slugify(title)
         content = request.form.get('content')
         category_id = request.form.get('category_id')
         
