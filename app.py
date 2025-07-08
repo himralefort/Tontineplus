@@ -3,13 +3,15 @@ app.py - Application principale pour le système de tontine et collecte de fonds
 """
 import os
 from datetime import datetime, timedelta
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, abort, current_app
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, abort, current_app, Markup
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_migrate import Migrate
 import uuid
 import logging
+import markdown
+import bleach
 from functools import wraps
 from flask_socketio import SocketIO, join_room, leave_room, send, emit
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
@@ -1624,6 +1626,61 @@ def add_member(tontine_id):
 
     return render_template('tontines/add_member.html', tontine=tontine)
 
+@app.template_filter('markdown')
+def markdown_filter(text):
+    if not text:
+        return ''
+    
+    # Liste des balises et attributs autorisés
+    allowed_tags = bleach.sanitizer.ALLOWED_TAGS + [
+        'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+        'pre', 'code', 'blockquote', 'img', 'br',
+        'ul', 'ol', 'li', 'hr', 'table', 'thead',
+        'tbody', 'tr', 'th', 'td'
+    ]
+    
+    allowed_attributes = {
+        'a': ['href', 'title'],
+        'img': ['src', 'alt', 'title'],
+        'code': ['class']
+    }
+    
+    # Convertir le markdown en HTML
+    html = markdown.markdown(text)
+    
+    # Nettoyer le HTML
+    clean_html = bleach.clean(
+        html,
+        tags=allowed_tags,
+        attributes=allowed_attributes,
+        strip=True
+    )
+    
+    return Markup(clean_html)
+
+@app.cli.command('init-forum')
+def init_forum_command():
+    """Initialise les catégories du forum"""
+    categories = [
+        {'name': 'Présentations', 'description': 'Présentez-vous à la communauté', 'slug': 'presentations'},
+        {'name': 'Projets d\'investissement', 'description': 'Partagez vos projets et trouvez des investisseurs', 'slug': 'projets-investissement'},
+        {'name': 'Opportunités', 'description': 'Opportunités d\'investissement et partenariats', 'slug': 'opportunites'},
+        {'name': 'Tontines', 'description': 'Discussions sur les tontines et systèmes de contribution', 'slug': 'tontines'},
+        {'name': 'Finance', 'description': 'Discussions générales sur la finance et l\'économie', 'slug': 'finance'},
+        {'name': 'Aide et support', 'description': 'Questions et aide sur la plateforme', 'slug': 'aide-support'},
+    ]
+    
+    for cat_data in categories:
+        if not ForumCategory.query.filter_by(slug=cat_data['slug']).first():
+            category = ForumCategory(
+                name=cat_data['name'],
+                description=cat_data['description'],
+                slug=cat_data['slug']
+            )
+            db.session.add(category)
+    
+    db.session.commit()
+    print('Catégories du forum initialisées avec succès')
 
 @app.route('/tontine/<int:tontine_id>/join', methods=['GET'])
 @login_required
