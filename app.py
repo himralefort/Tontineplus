@@ -2064,35 +2064,53 @@ def handle_join(data):
     join_room(f"tontine_{data['room']}")
     emit('status', {'msg': f"{data['username']} a rejoint la discussion"}, room=f"tontine_{data['room']}")
 
+from flask_login import current_user
+from flask_socketio import emit, disconnect
+from datetime import datetime
+
 @socketio.on('message')
 def handle_message(data):
+    # Vérifie que l'utilisateur est connecté
+    if not current_user.is_authenticated:
+        disconnect()
+        return
+
+    tontine_id = data['room']
+    content = data['message']
+    timestamp = datetime.utcnow()
+
     # Sauvegarder le message en base de données
     new_message = ChatMessage(
-        tontine_id=data['room'],
+        tontine_id=tontine_id,
         user_id=current_user.id,
-        content=data['message'],
-        timestamp=datetime.utcnow()
+        content=content,
+        timestamp=timestamp
     )
     db.session.add(new_message)
     db.session.commit()
-    
+
     # Envoyer le message à tous les membres de la room
     emit('new_message', {
         'sender': current_user.username,
-        'message': data['message'],
-        'timestamp': datetime.utcnow().isoformat(),
+        'message': content,
+        'timestamp': timestamp.isoformat(),
         'avatar': current_user.profile_picture_url,
         'user_id': current_user.id
-    }, room=f"tontine_{data['room']}")
-    
-    # Envoyer une notification aux utilisateurs qui ne sont pas sur la page
+    }, room=f"tontine_{tontine_id}")
+
+    # Récupérer les infos de la tontine (si elle existe)
+    tontine = Tontine.query.get(tontine_id)
+    tontine_name = tontine.name if tontine else "Tontine inconnue"
+
+    # Envoyer une notification aux autres utilisateurs connectés (sauf l'émetteur)
     emit('notification', {
         'sender': current_user.username,
-        'tontine_id': data['room'],
-        'tontine_name': Tontine.query.get(data['room']).name,
-        'message': data['message'],
-        'timestamp': datetime.utcnow().isoformat()
+        'tontine_id': tontine_id,
+        'tontine_name': tontine_name,
+        'message': content,
+        'timestamp': timestamp.isoformat()
     }, broadcast=True, include_self=False)
+
 
 # Gestion des erreurs
 @app.errorhandler(404)
