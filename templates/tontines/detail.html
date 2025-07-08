@@ -43,7 +43,7 @@
         transform: translateY(-5px);
     }
 
-    /* Total Collected Highlight - MEGA STYLE */
+    /* Total Collected Highlight */
     .total-collected-highlight {
         background: linear-gradient(135deg, var(--total-collected-color) 0%, #6d28d9 100%);
         color: white;
@@ -122,163 +122,96 @@
         }
     }
 
-    /* Typography */
-    .display-title {
-        font-weight: 800;
-        letter-spacing: -0.025em;
-        line-height: 1.2;
-    }
-
-    /* Buttons */
-    .btn-neon {
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-        border: none;
-        color: white;
-        font-weight: 600;
-        padding: 12px 24px;
-        border-radius: 12px;
-        box-shadow: 0 4px 20px -5px rgba(99, 102, 241, 0.4);
-        transition: all var(--transition-speed) ease;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .btn-neon:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px -5px rgba(99, 102, 241, 0.6);
-        color: white;
-    }
-
-    .btn-neon::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-        transition: all 0.6s ease;
-    }
-
-    .btn-neon:hover::before {
-        left: 100%;
-    }
-
-    /* Badges */
-    .badge-modern {
-        border-radius: 12px;
-        padding: 6px 12px;
-        font-weight: 600;
-        font-size: 0.75rem;
-        letter-spacing: 0.025em;
-    }
-
-    /* Avatar */
-    .avatar {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
-        object-fit: cover;
-        border: 3px solid white;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transition: all var(--transition-speed) ease;
-    }
-
-    .avatar:hover {
-        transform: scale(1.1);
-        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
-    }
-
-    /* Progress Bars */
-    .progress-modern {
-        height: 8px;
-        border-radius: 100px;
-        background-color: rgba(0, 0, 0, 0.05);
-    }
-
-    .progress-modern .progress-bar {
-        border-radius: 100px;
-        background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    }
-
-    /* Table */
-    .table-modern {
-        --bs-table-bg: transparent;
-        --bs-table-striped-bg: rgba(0, 0, 0, 0.02);
-        --bs-table-hover-bg: rgba(0, 0, 0, 0.03);
-    }
-
-    .table-modern th {
-        border-bottom: 2px solid rgba(0, 0, 0, 0.05);
-        font-weight: 600;
-        color: #64748b;
-        text-transform: uppercase;
-        font-size: 0.75rem;
-        letter-spacing: 0.05em;
-    }
-
-    /* Chat Styles - MODIFIED FOR FLOATING BUBBLE */
+    /* Chat Bubble Styles */
     .chat-bubble-container {
         position: fixed;
-        bottom: 30px;
-        right: 30px;
+        bottom: 20px;
+        right: 20px;
         width: 350px;
         z-index: 1000;
         transition: all 0.3s ease;
     }
 
-    .chat-bubble {
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(var(--glass-blur));
-        -webkit-backdrop-filter: blur(var(--glass-blur));
-        border: 1px solid rgba(255, 255, 255, 0.18);
-    }
-
-    .chat-header {
-        padding: 12px 16px;
+    .chat-bubble-header {
         background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
         color: white;
+        padding: 12px 16px;
+        border-radius: 12px 12px 0 0;
+        cursor: pointer;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        cursor: pointer;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
-    .chat-header h5 {
+    .chat-bubble-header h5 {
         margin: 0;
         font-weight: 600;
     }
 
-    .chat-toggle {
+    .chat-bubble-header .toggle-chat {
         background: none;
         border: none;
         color: white;
         font-size: 1.2rem;
     }
 
-    .chat-body {
-        height: 400px;
-        display: flex;
-        flex-direction: column;
+    .chat-bubble-content {
+        background: white;
+        border-radius: 0 0 12px 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        max-height: 400px;
+        transition: all 0.3s ease;
     }
 
-    .chat-messages {
-        flex: 1;
+    .chat-bubble-content.collapsed {
+        max-height: 0;
+    }
+
+    .chat-bubble-messages {
+        height: 300px;
         overflow-y: auto;
-        padding: 16px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
+        padding: 12px;
+        background: #f8f9fa;
     }
 
+    .chat-bubble-input {
+        padding: 12px;
+        border-top: 1px solid #eee;
+        background: white;
+    }
+
+    /* Make chat bubble draggable */
+    .chat-bubble-container.draggable {
+        cursor: move;
+        user-select: none;
+    }
+
+    /* Notification badge */
+    .chat-notification-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background-color: var(--danger-color);
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: bold;
+    }
+
+    /* Message styles */
     .chat-message {
         display: flex;
         max-width: 80%;
         animation: fadeIn 0.3s ease;
         transition: all 0.3s ease;
+        margin-bottom: 12px;
     }
 
     .message-received {
@@ -347,37 +280,6 @@
         color: rgba(255, 255, 255, 0.8);
     }
 
-    .chat-input-container {
-        padding: 12px;
-        border-top: 1px solid rgba(0, 0, 0, 0.05);
-        background: white;
-    }
-
-    .chat-input-group {
-        display: flex;
-    }
-
-    .chat-input {
-        flex: 1;
-        border-radius: 20px;
-        padding: 10px 15px;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        outline: none;
-    }
-
-    .chat-send-btn {
-        margin-left: 8px;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-        color: white;
-        border: none;
-    }
-
     /* Typing indicator */
     .typing-indicator {
         display: flex;
@@ -414,40 +316,6 @@
         30% { transform: translateY(-4px); }
     }
 
-    /* Notification badge */
-    .chat-notification-badge {
-        position: absolute;
-        top: -8px;
-        right: -8px;
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        background-color: var(--danger-color);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.7rem;
-        font-weight: bold;
-        animation: pulse 1.5s infinite;
-    }
-
-    /* Message animations */
-    @keyframes messageIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .new-message {
-        animation: messageIn 0.3s ease;
-    }
-
-    /* Draggable chat */
-    .chat-bubble.draggable {
-        cursor: move;
-        user-select: none;
-    }
-
     /* Custom Scrollbar */
     ::-webkit-scrollbar {
         width: 8px;
@@ -469,364 +337,9 @@
     }
 
     /* Animations */
-    @keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
-        70% { box-shadow: 0 0 0 12px rgba(99, 102, 241, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
-    }
-
-    .pulse {
-        animation: pulse 2s infinite;
-    }
-
-    /* Floating Action Button */
-    .fab {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 24px;
-        box-shadow: 0 10px 30px -5px rgba(99, 102, 241, 0.5);
-        z-index: 1000;
-        transition: all var(--transition-speed) ease;
-        cursor: pointer;
-    }
-
-    .fab:hover {
-        transform: scale(1.1) translateY(-5px);
-        box-shadow: 0 15px 35px -5px rgba(99, 102, 241, 0.6);
-    }
-
-    /* Dashboard Stats */
-    .stat-card {
-        padding: 20px;
-        border-radius: 16px;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .stat-card .icon {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        font-size: 2.5rem;
-        opacity: 0.2;
-    }
-
-    /* Tabs */
-    .nav-tabs-modern {
-        border-bottom: 2px solid rgba(0, 0, 0, 0.05);
-    }
-
-    .nav-tabs-modern .nav-link {
-        border: none;
-        color: #64748b;
-        font-weight: 600;
-        padding: 12px 20px;
-        position: relative;
-        transition: all var(--transition-speed) ease;
-    }
-
-    .nav-tabs-modern .nav-link:hover {
-        color: var(--primary-color);
-    }
-
-    .nav-tabs-modern .nav-link.active {
-        color: var(--primary-color);
-        background: transparent;
-    }
-
-    .nav-tabs-modern .nav-link.active::after {
-        content: '';
-        position: absolute;
-        bottom: -2px;
-        left: 0;
-        width: 100%;
-        height: 3px;
-        background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-        border-radius: 3px 3px 0 0;
-    }
-
-    /* Form Elements */
-    .form-control-modern {
-        border-radius: 12px;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        padding: 12px 16px;
-        transition: all var(--transition-speed) ease;
-    }
-
-    .form-control-modern:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
-    }
-
-    /* List Group */
-    .list-group-item-modern {
-        border-radius: 12px;
-        margin-bottom: 8px;
-        border: none;
-        transition: all var(--transition-speed) ease;
-        background: rgba(255, 255, 255, 0.7);
-    }
-
-    .list-group-item-modern:hover {
-        background: rgba(255, 255, 255, 0.9);
-        transform: translateX(5px);
-    }
-
-    /* Breadcrumb */
-    .breadcrumb-modern {
-        background-color: transparent;
-        padding: 0;
-    }
-
-    .breadcrumb-item.active {
-        color: #64748b;
-        font-weight: 500;
-    }
-
-    /* Responsive Adjustments */
-    @media (max-width: 992px) {
-        .glass-card {
-            margin-bottom: 20px;
-        }
-    }
-
-    /* Financial Summary */
-    .financial-summary {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 16px;
-        margin-bottom: 24px;
-    }
-
-    .financial-card {
-        background: white;
-        border-radius: 12px;
-        padding: 16px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        transition: all var(--transition-speed) ease;
-    }
-
-    .financial-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-    }
-
-    .financial-card .title {
-        font-size: 0.875rem;
-        color: #64748b;
-        margin-bottom: 8px;
-        font-weight: 600;
-    }
-
-    .financial-card .amount {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--dark-color);
-    }
-
-    /* Contribution Progress */
-    .contribution-progress {
-        margin-top: 24px;
-    }
-
-    .contribution-progress .progress-container {
-        display: flex;
-        align-items: center;
-        margin-bottom: 12px;
-    }
-
-    .contribution-progress .progress-label {
-        width: 120px;
-        font-weight: 600;
-    }
-
-    /* Payment History */
-    .payment-history {
-        margin-top: 32px;
-    }
-
-    .payment-history .table {
-        margin-top: 16px;
-    }
-
-    /* Member List */
-    .member-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        gap: 16px;
-    }
-
-    .member-card {
-        display: flex;
-        align-items: center;
-        padding: 12px;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        transition: all var(--transition-speed) ease;
-    }
-
-    .member-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    .member-card .avatar {
-        margin-right: 12px;
-    }
-
-    .member-card .info {
-        flex: 1;
-    }
-
-    .member-card .name {
-        font-weight: 600;
-        margin-bottom: 2px;
-    }
-
-    .member-card .joined {
-        font-size: 0.75rem;
-        color: #64748b;
-    }
-
-    /* Cycle Timeline */
-    .cycle-timeline {
-        position: relative;
-        padding-left: 30px;
-    }
-
-    .cycle-timeline::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 10px;
-        height: 100%;
-        width: 2px;
-        background: rgba(0, 0, 0, 0.1);
-    }
-
-    .cycle-item {
-        position: relative;
-        padding-bottom: 24px;
-    }
-
-    .cycle-item::before {
-        content: '';
-        position: absolute;
-        top: 5px;
-        left: -30px;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background: white;
-        border: 4px solid var(--primary-color);
-    }
-
-    .cycle-item.completed::before {
-        border-color: var(--success-color);
-    }
-
-    .cycle-item.current::before {
-        border-color: var(--warning-color);
-        animation: pulse 2s infinite;
-    }
-
-    .cycle-item .cycle-content {
-        background: white;
-        padding: 16px;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    }
-
-    .cycle-item .cycle-period {
-        font-weight: 600;
-        margin-bottom: 8px;
-    }
-
-    .cycle-item .cycle-status {
-        display: inline-block;
-        padding: 4px 8px;
-        border-radius: 100px;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-
-    .cycle-item .cycle-status.completed {
-        background: rgba(16, 185, 129, 0.1);
-        color: var(--success-color);
-    }
-
-    .cycle-item .cycle-status.current {
-        background: rgba(245, 158, 11, 0.1);
-        color: var(--warning-color);
-    }
-
-    /* Transaction Cards */
-    .transaction-card {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 16px;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        margin-bottom: 12px;
-        transition: all var(--transition-speed) ease;
-    }
-
-    .transaction-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    .transaction-card .transaction-info {
-        flex: 1;
-    }
-
-    .transaction-card .transaction-date {
-        font-size: 0.75rem;
-        color: #64748b;
-        margin-bottom: 4px;
-    }
-
-    .transaction-card .transaction-description {
-        font-weight: 600;
-    }
-
-    .transaction-card .transaction-amount {
-        font-weight: 700;
-    }
-
-    .transaction-card .deposit {
-        color: var(--success-color);
-    }
-
-    .transaction-card .withdrawal {
-        color: var(--danger-color);
-    }
-
-    /* Responsive Financial Dashboard */
-    @media (max-width: 768px) {
-        .financial-summary {
-            grid-template-columns: 1fr;
-        }
-        
-        .member-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .total-collected-highlight .amount {
-            font-size: 2.2rem;
-        }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 </style>
 {% endblock %}
@@ -1164,38 +677,32 @@
     </div>
 </div>
 
-<!-- Floating Chat Bubble -->
-<div class="chat-bubble-container">
-    <div class="chat-bubble draggable">
-        <div class="chat-header">
-            <h5>Discussion</h5>
-            <button class="chat-toggle">
-                <i class="bi bi-dash"></i>
+<!-- Chat Bubble -->
+<div class="chat-bubble-container" id="chat-bubble">
+    <div class="chat-bubble-header draggable" id="chat-header">
+        <h5>Discussion</h5>
+        <div>
+            <span class="chat-notification-badge" id="chat-notification-badge" style="display: none;">0</span>
+            <button class="toggle-chat" id="toggle-chat">
+                <i class="bi bi-chevron-down" id="chat-toggle-icon"></i>
             </button>
-            <span class="chat-notification-badge" style="display: none;">0</span>
         </div>
-        <div class="chat-body">
-            <div class="chat-messages" id="chat-container">
-                <!-- Messages will appear here -->
-            </div>
-            <div class="chat-input-container">
-                <div class="chat-input-group">
-                    <input type="text" class="chat-input" id="message-input" placeholder="Écrire un message..." autocomplete="off">
-                    <button class="chat-send-btn" id="send-button">
-                        <i class="bi bi-send-fill"></i>
-                    </button>
-                </div>
+    </div>
+    <div class="chat-bubble-content" id="chat-content">
+        <div class="chat-bubble-messages" id="chat-messages">
+            <!-- Messages will appear here -->
+        </div>
+        <div class="chat-bubble-input">
+            <div class="input-group">
+                <input type="text" id="message-input" class="form-control" 
+                       placeholder="Écrire un message..." autocomplete="off">
+                <button class="btn btn-primary" id="send-button">
+                    <i class="bi bi-send-fill"></i>
+                </button>
             </div>
         </div>
     </div>
 </div>
-
-<!-- Floating Action Button -->
-{% if current_user.id == tontine.creator_id or current_user.admin %}
-<div class="fab pulse" data-bs-toggle="modal" data-bs-target="#tontineActionsModal">
-    <i class="bi bi-lightning-charge"></i>
-</div>
-{% endif %}
 
 <!-- Modals -->
 {% if current_user.id == tontine.creator_id or current_user.admin %}
@@ -1470,74 +977,27 @@
 <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Gestion des modals
-        const removeMemberModal = document.getElementById('removeMemberModal');
-        if (removeMemberModal) {
-            removeMemberModal.addEventListener('show.bs.modal', function(event) {
-                const button = event.relatedTarget;
-                const userId = button.getAttribute('data-user-id');
-                const username = button.getAttribute('data-username');
-                
-                document.getElementById('remove-user-id').value = userId;
-                document.getElementById('remove-username').textContent = username;
-            });
-        }
-        
-        const selectBeneficiaryModal = document.getElementById('selectBeneficiaryModal');
-        if (selectBeneficiaryModal) {
-            selectBeneficiaryModal.addEventListener('show.bs.modal', function(event) {
-                const button = event.relatedTarget;
-                const cycleId = button.getAttribute('data-cycle-id');
-                document.getElementById('cycle-id').value = cycleId;
-            });
-        }
-        
-        // Gestion de la sélection du bénéficiaire
-        const manualSection = document.getElementById('manualSelectionSection');
-        const randomRadio = document.getElementById('randomSelection');
-        const manualRadio = document.getElementById('manualSelection');
-        
-        if (randomRadio && manualRadio) {
-            randomRadio.addEventListener('change', function() {
-                if (this.checked) {
-                    manualSection.style.opacity = '0.5';
-                    manualSection.querySelectorAll('input[type="radio"]').forEach(radio => {
-                        radio.disabled = true;
-                    });
-                }
-            });
-            
-            manualRadio.addEventListener('change', function() {
-                if (this.checked) {
-                    manualSection.style.opacity = '1';
-                    manualSection.querySelectorAll('input[type="radio"]').forEach(radio => {
-                        radio.disabled = false;
-                    });
-                }
-            });
-        }
-        
         // Chat Implementation
         const socket = io();
         const room = "{{ tontine.id }}";
         const currentUserId = "{{ current_user.id }}";
-        const chatContainer = document.getElementById('chat-container');
+        const chatMessages = document.getElementById('chat-messages');
         const messageInput = document.getElementById('message-input');
         const sendButton = document.getElementById('send-button');
-        const chatToggle = document.querySelector('.chat-toggle');
-        const chatBubble = document.querySelector('.chat-bubble');
-        const chatBody = document.querySelector('.chat-body');
-        const notificationBadge = document.querySelector('.chat-notification-badge');
+        const toggleChat = document.getElementById('toggle-chat');
+        const chatContent = document.getElementById('chat-content');
+        const notificationBadge = document.getElementById('chat-notification-badge');
         let isChatCollapsed = false;
         let unreadMessages = 0;
 
         // Make chat bubble draggable
+        const chatBubble = document.getElementById('chat-bubble');
+        const chatHeader = document.getElementById('chat-header');
         let isDragging = false;
         let offsetX, offsetY;
 
-        chatBubble.addEventListener('mousedown', (e) => {
-            // Only drag if clicking on the header
-            if (e.target.closest('.chat-header')) {
+        chatHeader.addEventListener('mousedown', function(e) {
+            if (e.target === this || e.target.classList.contains('draggable')) {
                 isDragging = true;
                 offsetX = e.clientX - chatBubble.getBoundingClientRect().left;
                 offsetY = e.clientY - chatBubble.getBoundingClientRect().top;
@@ -1545,97 +1005,47 @@
             }
         });
 
-        document.addEventListener('mousemove', (e) => {
+        document.addEventListener('mousemove', function(e) {
             if (!isDragging) return;
             
-            const container = document.querySelector('.chat-bubble-container');
-            const containerRect = container.getBoundingClientRect();
-            const bubbleRect = chatBubble.getBoundingClientRect();
-            
-            let left = e.clientX - offsetX - containerRect.left;
-            let top = e.clientY - offsetY - containerRect.top;
-            
-            // Boundary checks
-            left = Math.max(0, Math.min(left, containerRect.width - bubbleRect.width));
-            top = Math.max(0, Math.min(top, containerRect.height - bubbleRect.height));
-            
-            chatBubble.style.left = `${left}px`;
-            chatBubble.style.top = `${top}px`;
+            chatBubble.style.left = (e.clientX - offsetX) + 'px';
+            chatBubble.style.top = (e.clientY - offsetY) + 'px';
         });
 
-        document.addEventListener('mouseup', () => {
+        document.addEventListener('mouseup', function() {
             isDragging = false;
-            chatBubble.style.cursor = 'move';
+            chatBubble.style.cursor = '';
         });
 
-        // Toggle chat collapse/expand
-        chatToggle.addEventListener('click', function() {
+        // Toggle chat visibility
+        toggleChat.addEventListener('click', function() {
             isChatCollapsed = !isChatCollapsed;
-            if (isChatCollapsed) {
-                chatBody.style.display = 'none';
-                chatToggle.innerHTML = '<i class="bi bi-plus"></i>';
-            } else {
-                chatBody.style.display = 'block';
-                chatToggle.innerHTML = '<i class="bi bi-dash"></i>';
+            chatContent.classList.toggle('collapsed', isChatCollapsed);
+            const icon = document.getElementById('chat-toggle-icon');
+            icon.className = isChatCollapsed ? 'bi bi-chevron-up' : 'bi bi-chevron-down';
+            
+            // Reset notifications when opening chat
+            if (!isChatCollapsed) {
                 unreadMessages = 0;
                 updateNotificationBadge();
-                // Scroll to bottom when expanding
-                setTimeout(() => {
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                }, 100);
             }
         });
 
-        // Rejoindre la room de discussion
-        socket.emit('join', {
-            room: room,
-            username: "{{ current_user.username }}"
-        });
-
-        // Recevoir un nouveau message
+        // Receive new message
         socket.on('new_message', function(data) {
             const isCurrentUser = data.user_id == currentUserId;
-            
             const messageElement = createMessageElement(data, isCurrentUser);
-            chatContainer.appendChild(messageElement);
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
             
-            // Scroll to bottom if chat is expanded and it's our message or chat is not collapsed
-            if (!isChatCollapsed || isCurrentUser) {
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            } else {
-                // Increment notification if chat is collapsed and it's not our message
+            // If chat is collapsed or it's not our message, increment notifications
+            if (isChatCollapsed || !isCurrentUser) {
                 unreadMessages++;
                 updateNotificationBadge();
             }
         });
 
-        // Recevoir une notification (quand on n'est pas sur la page)
-        socket.on('notification', function(data) {
-            // On pourrait implémenter des notifications push ici
-            console.log('Nouveau message de', data.sender, 'dans', data.tontine_name);
-        });
-
-        // Indicateur de saisie en cours
-        let typingTimeout;
-        messageInput.addEventListener('input', function() {
-            socket.emit('typing', {
-                room: room,
-                username: "{{ current_user.username }}"
-            });
-            
-            clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(() => {
-                socket.emit('stop_typing', { room: room });
-            }, 2000);
-        });
-
-        // Quelqu'un est en train de taper
-        socket.on('typing', function(data) {
-            // Afficher l'indicateur de saisie
-            // (implémentation omise pour la brièveté)
-        });
-
-        // Envoyer un message
+        // Send message
         function sendMessage() {
             const message = messageInput.value.trim();
             if (message) {
@@ -1654,10 +1064,10 @@
             }
         });
 
-        // Créer un élément de message
+        // Create message element
         function createMessageElement(data, isCurrentUser) {
             const messageDiv = document.createElement('div');
-            messageDiv.className = `chat-message ${isCurrentUser ? 'message-sent' : 'message-received'} new-message';
+            messageDiv.className = `chat-message ${isCurrentUser ? 'message-sent' : 'message-received'} new-message`;
             
             const timestamp = new Date(data.timestamp);
             const timeString = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -1679,7 +1089,7 @@
             return messageDiv;
         }
 
-        // Mettre à jour le badge de notification
+        // Update notification badge
         function updateNotificationBadge() {
             if (unreadMessages > 0) {
                 notificationBadge.style.display = 'flex';
@@ -1689,17 +1099,23 @@
             }
         }
 
-        // Charger l'historique du chat
+        // Load chat history
         fetch(`/tontines/${room}/chat`)
             .then(response => response.json())
             .then(messages => {
                 messages.forEach(data => {
                     const isCurrentUser = data.sender === "{{ current_user.username }}";
                     const messageElement = createMessageElement(data, isCurrentUser);
-                    chatContainer.appendChild(messageElement);
+                    chatMessages.appendChild(messageElement);
                 });
-                chatContainer.scrollTop = chatContainer.scrollHeight;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
             });
+
+        // Join chat room
+        socket.emit('join', {
+            room: room,
+            username: "{{ current_user.username }}"
+        });
 
         // Set default dates for new cycle modal
         const today = new Date().toISOString().split('T')[0];
