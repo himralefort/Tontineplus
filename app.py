@@ -3,7 +3,7 @@ app.py - Application principale pour le système de tontine et collecte de fonds
 """
 import os
 from datetime import datetime, timedelta
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, abort, current_app, Markup
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, abort, current_app
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -17,6 +17,7 @@ from flask_socketio import SocketIO, join_room, leave_room, send, emit
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 from dotenv import load_dotenv
 from sqlalchemy.exc import SQLAlchemyError
+from jinja2 import Markup
 
 # Charger les variables d'environnement depuis le fichier .env
 load_dotenv()
