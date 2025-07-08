@@ -151,6 +151,64 @@ class Transaction(db.Model):
 
     tontine_cycle_id = db.Column(db.Integer, db.ForeignKey('tontine_cycle.id'), nullable=True)
     tontine_cycle = db.relationship('TontineCycle', backref='transactions')
+
+
+# Modèles pour le forum
+class ForumCategory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    slug = db.Column(db.String(100), unique=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_active = db.Column(db.Boolean, default=True)
+    order = db.Column(db.Integer, default=0)
+    
+    topics = db.relationship('ForumTopic', backref='category', lazy='dynamic')
+
+class ForumTopic(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('forum_category.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    views = db.Column(db.Integer, default=0)
+    is_pinned = db.Column(db.Boolean, default=False)
+    is_closed = db.Column(db.Boolean, default=False)
+    slug = db.Column(db.String(200), unique=True)
+    
+    user = db.relationship('User')
+    posts = db.relationship('ForumPost', backref='topic', lazy='dynamic')
+
+class ForumPost(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    topic_id = db.Column(db.Integer, db.ForeignKey('forum_topic.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_first_post = db.Column(db.Boolean, default=False)
+    
+    user = db.relationship('User')
+    likes = db.relationship('ForumLike', backref='post', lazy='dynamic')
+
+class ForumLike(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('forum_post.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship('User')
+
+class UserFollow(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    follower_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    followed_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    follower = db.relationship('User', foreign_keys=[follower_id])
+    followed = db.relationship('User', foreign_keys=[followed_id])
     
 class Tontine(db.Model):
     __tablename__ = 'tontine'
@@ -2007,7 +2065,193 @@ def create_cycle(tontine_id):
     flash("Nouveau cycle créé avec succès", "success")
     return redirect(url_for('tontine_detail', tontine_id=tontine_id))
 
+# Routes pour le forum
+@app.route('/forum')
+def forum_home():
+    categories = ForumCategory.query.filter_by(is_active=True).order_by(ForumCategory.order).all()
+    
+    # Derniers sujets actifs
+    recent_topics = ForumTopic.query.order_by(ForumTopic.updated_at.desc()).limit(5).all()
+    
+    # Sujets populaires
+    popular_topics = ForumTopic.query.order_by(ForumTopic.views.desc()).limit(5).all()
+    
+    return render_template('forum/index.html',
+                         categories=categories,
+                         recent_topics=recent_topics,
+                         popular_topics=popular_topics)
 
+@app.route('/forum/<category_slug>')
+def forum_category(category_slug):
+    category = ForumCategory.query.filter_by(slug=category_slug).first_or_404()
+    topics = ForumTopic.query.filter_by(category_id=category.id)\
+        .order_by(ForumTopic.is_pinned.desc(), ForumTopic.updated_at.desc())\
+        .all()
+    
+    return render_template('forum/category.html',
+                         category=category,
+                         topics=topics)
+
+@app.route('/forum/<category_slug>/<topic_slug>', methods=['GET', 'POST'])
+@login_required
+def forum_topic(category_slug, topic_slug):
+    topic = ForumTopic.query.filter_by(slug=topic_slug).first_or_404()
+    
+    # Incrémenter le compteur de vues
+    topic.views += 1
+    db.session.commit()
+    
+    if request.method == 'POST':
+        content = request.form.get('content')
+        if not content:
+            flash('Le message ne peut pas être vide', 'danger')
+        else:
+            new_post = ForumPost(
+                content=content,
+                topic_id=topic.id,
+                user_id=current_user.id
+            )
+            db.session.add(new_post)
+            
+            # Mettre à jour la date de modification du sujet
+            topic.updated_at = datetime.utcnow()
+            db.session.commit()
+            
+            flash('Votre message a été publié', 'success')
+            return redirect(url_for('forum_topic', category_slug=category_slug, topic_slug=topic_slug))
+    
+    # Pagination des messages
+    page = request.args.get('page', 1, type=int)
+    posts = ForumPost.query.filter_by(topic_id=topic.id)\
+        .order_by(ForumPost.created_at.asc())\
+        .paginate(page=page, per_page=10)
+    
+    return render_template('forum/topic.html',
+                         topic=topic,
+                         posts=posts)
+
+@app.route('/forum/new-topic', methods=['GET', 'POST'])
+@login_required
+def new_topic():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        content = request.form.get('content')
+        category_id = request.form.get('category_id')
+        
+        if not title or not content or not category_id:
+            flash('Veuillez remplir tous les champs', 'danger')
+        else:
+            # Créer un slug à partir du titre
+            slug = slugify(title)
+            if ForumTopic.query.filter_by(slug=slug).first():
+                slug = f"{slug}-{int(time.time())}"
+            
+            new_topic = ForumTopic(
+                title=title,
+                content=content,
+                category_id=category_id,
+                user_id=current_user.id,
+                slug=slug
+            )
+            
+            db.session.add(new_topic)
+            
+            # Créer le premier message
+            first_post = ForumPost(
+                content=content,
+                topic_id=new_topic.id,
+                user_id=current_user.id,
+                is_first_post=True
+            )
+            db.session.add(first_post)
+            
+            db.session.commit()
+            
+            flash('Votre sujet a été créé avec succès', 'success')
+            return redirect(url_for('forum_topic', 
+                                 category_slug=new_topic.category.slug,
+                                 topic_slug=new_topic.slug))
+    
+    categories = ForumCategory.query.filter_by(is_active=True).all()
+    return render_template('forum/new_topic.html',
+                         categories=categories)
+
+@app.route('/forum/post/<int:post_id>/like', methods=['POST'])
+@login_required
+def like_post(post_id):
+    post = ForumPost.query.get_or_404(post_id)
+    
+    # Vérifier si l'utilisateur a déjà liké ce post
+    existing_like = ForumLike.query.filter_by(
+        post_id=post_id,
+        user_id=current_user.id
+    ).first()
+    
+    if existing_like:
+        db.session.delete(existing_like)
+        action = 'unliked'
+    else:
+        new_like = ForumLike(
+            post_id=post_id,
+            user_id=current_user.id
+        )
+        db.session.add(new_like)
+        action = 'liked'
+    
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'action': action,
+        'like_count': post.likes.count()
+    })
+
+@app.route('/forum/users')
+@login_required
+def forum_users():
+    # Liste des utilisateurs avec le plus d'activité
+    active_users = User.query\
+        .outerjoin(ForumTopic, ForumTopic.user_id == User.id)\
+        .outerjoin(ForumPost, ForumPost.user_id == User.id)\
+        .group_by(User.id)\
+        .order_by(db.func.count(ForumTopic.id).desc(), db.func.count(ForumPost.id).desc())\
+        .limit(20)\
+        .all()
+    
+    return render_template('forum/users.html',
+                         active_users=active_users)
+
+@app.route('/forum/users/<int:user_id>/follow', methods=['POST'])
+@login_required
+def follow_user(user_id):
+    user_to_follow = User.query.get_or_404(user_id)
+    
+    if user_to_follow.id == current_user.id:
+        return jsonify({'success': False, 'error': "Vous ne pouvez pas vous suivre vous-même"})
+    
+    existing_follow = UserFollow.query.filter_by(
+        follower_id=current_user.id,
+        followed_id=user_id
+    ).first()
+    
+    if existing_follow:
+        db.session.delete(existing_follow)
+        action = 'unfollowed'
+    else:
+        new_follow = UserFollow(
+            follower_id=current_user.id,
+            followed_id=user_id
+        )
+        db.session.add(new_follow)
+        action = 'followed'
+    
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'action': action,
+        'follower_count': UserFollow.query.filter_by(followed_id=user_id).count()
+    })
 
 @app.route('/tontine/select_beneficiary', methods=['POST'])
 @login_required
