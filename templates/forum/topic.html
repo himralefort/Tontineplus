@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}{{ topic.title }} - Forum TontinePlus{% endblock %}
+
+{% block extra_css %}
+<style>
+    .post-content {
+        line-height: 1.7;
+    }
+    .post-content img {
+        max-width: 100%;
+        height: auto;
+    }
+    .like-btn:hover {
+        transform: scale(1.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('forum_home') }}">Forum</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('forum_category', category_slug=topic.category.slug) }}">{{ topic.category.name }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ topic.title|truncate(30) }}</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">{{ topic.title }}</h2>
+        <div>
+            {% if current_user.id == topic.user_id or current_user.admin %}
+            <button class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-trash"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-pencil"></i>
+            </button>
+            {% endif %}
+            {% if current_user.admin %}
+            <button class="btn btn-sm btn-outline-warning">
+                <i class="bi bi-pin-angle"></i>
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex">
+                <div class="flex-shrink-0 me-3 text-center">
+                    <img src="{{ topic.user.profile_picture_url }}" 
+                         class="rounded-circle mb-2" 
+                         width="80" 
+                         height="80" 
+                         alt="{{ topic.user.username }}">
+                    <h6 class="mb-0">{{ topic.user.username }}</h6>
+                    <small class="text-muted">Membre</small>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between mb-2">
+                        <small class="text-muted">Posté {{ topic.created_at|time_ago }}</small>
+                        <span class="badge bg-primary">#1</span>
+                    </div>
+                    <div class="post-content mb-3">
+                        {{ topic.content|markdown|safe }}
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <button class="btn btn-sm btn-outline-primary like-btn" data-post-id="{{ topic.posts.first().id }}">
+                                <i class="bi bi-heart"></i> 
+                                <span class="like-count">{{ topic.posts.first().likes.count() }}</span>
+                            </button>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-reply"></i> Répondre
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Réponses -->
+    <h4 class="mb-3">{{ posts.total }} réponses</h4>
+
+    {% for post in posts.items %}
+    <div class="card shadow-sm mb-3" id="post-{{ post.id }}">
+        <div class="card-body">
+            <div class="d-flex">
+                <div class="flex-shrink-0 me-3 text-center">
+                    <img src="{{ post.user.profile_picture_url }}" 
+                         class="rounded-circle mb-2" 
+                         width="60" 
+                         height="60" 
+                         alt="{{ post.user.username }}">
+                    <h6 class="mb-0">{{ post.user.username }}</h6>
+                    <small class="text-muted">Membre</small>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between mb-2">
+                        <small class="text-muted">Posté {{ post.created_at|time_ago }}</small>
+                        <a href="#post-{{ post.id }}" class="text-decoration-none">
+                            <span class="badge bg-secondary">#{{ loop.index + 1 }}</span>
+                        </a>
+                    </div>
+                    <div class="post-content mb-3">
+                        {{ post.content|markdown|safe }}
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <button class="btn btn-sm btn-outline-primary like-btn" data-post-id="{{ post.id }}">
+                                <i class="bi bi-heart"></i> 
+                                <span class="like-count">{{ post.likes.count() }}</span>
+                            </button>
+                        </div>
+                        <div>
+                            {% if current_user.id == post.user_id or current_user.admin %}
+                            <button class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            {% endif %}
+                            <button class="btn btn-sm btn-outline-secondary reply-btn" data-post-id="{{ post.id }}">
+                                <i class="bi bi-reply"></i> Répondre
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Pagination -->
+    <nav aria-label="Pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if posts.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('forum_topic', category_slug=topic.category.slug, topic_slug=topic.slug, page=posts.prev_num) }}">
+                    Précédent
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for page_num in posts.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=3) %}
+                {% if page_num %}
+                    <li class="page-item {% if page_num == posts.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('forum_topic', category_slug=topic.category.slug, topic_slug=topic.slug, page=page_num) }}">
+                            {{ page_num }}
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if posts.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('forum_topic', category_slug=topic.category.slug, topic_slug=topic.slug, page=posts.next_num) }}">
+                    Suivant
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <!-- Formulaire de réponse -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-reply me-1"></i> Répondre</h5>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                <div class="mb-3">
+                    <textarea class="form-control" id="content" name="content" rows="5" 
+                              placeholder="Votre réponse..." required></textarea>
+                </div>
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send me-1"></i> Publier
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion des likes
+    document.querySelectorAll('.like-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const postId = this.dataset.postId;
+            fetch(`/forum/post/${postId}/like`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const likeCount = this.querySelector('.like-count');
+                    likeCount.textContent = data.like_count;
+                    
+                    if (data.action === 'liked') {
+                        this.classList.add('text-danger');
+                        this.innerHTML = `<i class="bi bi-heart-fill"></i> <span class="like-count">${data.like_count}</span>`;
+                    } else {
+                        this.classList.remove('text-danger');
+                        this.innerHTML = `<i class="bi bi-heart"></i> <span class="like-count">${data.like_count}</span>`;
+                    }
+                }
+            });
+        });
+    });
+
+    // Gestion des réponses (citation)
+    document.querySelectorAll('.reply-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const postId = this.dataset.postId;
+            const postContent = document.querySelector(`#post-${postId} .post-content`).textContent;
+            const quotedContent = `> ${postContent.replace(/\n/g, '\n> ')}\n\n`;
+            
+            const textarea = document.getElementById('content');
+            textarea.value = quotedContent + textarea.value;
+            textarea.focus();
+            
+            // Scroll vers le formulaire
+            textarea.scrollIntoView({ behavior: 'smooth' });
+        });
+    });
+});
+</script>
+{% endblock %}

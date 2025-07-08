@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Forum - TontinePlus{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-5 fw-bold">Forum d'investissement</h1>
+            <p class="lead">Connectez-vous avec d'autres membres, partagez vos projets et trouvez des investisseurs</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Catégories principales -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-grid-fill me-2"></i> Catégories</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% for category in categories %}
+                    <div class="p-3 border-bottom">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1">
+                                    <a href="{{ url_for('forum_category', category_slug=category.slug) }}" class="text-decoration-none">
+                                        {{ category.name }}
+                                    </a>
+                                </h5>
+                                <p class="text-muted small mb-0">{{ category.description }}</p>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted d-block">{{ category.topics.count() }} sujets</small>
+                                {% set last_topic = category.topics.order_by(ForumTopic.updated_at.desc()).first() %}
+                                {% if last_topic %}
+                                <small class="text-muted">
+                                    Dernier: 
+                                    <a href="{{ url_for('forum_topic', category_slug=category.slug, topic_slug=last_topic.slug) }}" class="text-decoration-none">
+                                        {{ last_topic.title|truncate(30) }}
+                                    </a>
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar avec activités récentes -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-lightning-charge-fill me-2"></i> Sujets récents</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for topic in recent_topics %}
+                        <a href="{{ url_for('forum_topic', category_slug=topic.category.slug, topic_slug=topic.slug) }}" 
+                           class="list-group-item list-group-item-action border-0 py-2">
+                            <div class="d-flex align-items-center">
+                                <img src="{{ topic.user.profile_picture_url }}" 
+                                     class="rounded-circle me-2" 
+                                     width="32" 
+                                     height="32" 
+                                     alt="{{ topic.user.username }}">
+                                <div>
+                                    <h6 class="mb-0">{{ topic.title|truncate(40) }}</h6>
+                                    <small class="text-muted">
+                                        Par {{ topic.user.username }} • {{ topic.created_at|time_ago }}
+                                    </small>
+                                </div>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-fire me-2"></i> Sujets populaires</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for topic in popular_topics %}
+                        <a href="{{ url_for('forum_topic', category_slug=topic.category.slug, topic_slug=topic.slug) }}" 
+                           class="list-group-item list-group-item-action border-0 py-2">
+                            <div class="d-flex justify-content-between">
+                                <span>{{ topic.title|truncate(30) }}</span>
+                                <span class="badge bg-primary rounded-pill">{{ topic.views }} vues</span>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

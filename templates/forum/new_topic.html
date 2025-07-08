@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Nouveau sujet - Forum TontinePlus{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('forum_home') }}">Forum</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Nouveau sujet</li>
+        </ol>
+    </nav>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-plus-circle me-1"></i> Créer un nouveau sujet</h5>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                <div class="mb-3">
+                    <label for="title" class="form-label">Titre du sujet</label>
+                    <input type="text" class="form-control" id="title" name="title" required>
+                </div>
+                <div class="mb-3">
+                    <label for="category_id" class="form-label">Catégorie</label>
+                    <select class="form-select" id="category_id" name="category_id" required>
+                        <option value="" selected disabled>Sélectionnez une catégorie</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="content" class="form-label">Contenu</label>
+                    <textarea class="form-control" id="content" name="content" rows="8" required></textarea>
+                    <div class="form-text">
+                        Vous pouvez utiliser le <a href="#" data-bs-toggle="modal" data-bs-target="#markdownHelp">format Markdown</a> pour mettre en forme votre message.
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send me-1"></i> Publier
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'aide Markdown -->
+<div class="modal fade" id="markdownHelp" tabindex="-1" aria-labelledby="markdownHelpLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="markdownHelpLabel">Aide sur le format Markdown</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Formatage de base</h6>
+                        <pre><code>*italique* ou _italique_
+**gras** ou __gras__
+~~barré~~
+
+# Titre 1
+## Titre 2
+### Titre 3
+
+- Liste
+- à puces
+
+1. Liste
+2. numérotée</code></pre>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Liens et images</h6>
+                        <pre><code>[Lien](http://example.com)
+![Image](http://example.com/image.jpg)
+
+> Citation
+
+`code en ligne`
+
+```python
+bloc de code
+```</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Membres du forum - TontinePlus{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-5 fw-bold">Membres du forum</h1>
+            <p class="lead">Connectez-vous avec d'autres investisseurs et porteurs de projet</p>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for user in active_users %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <img src="{{ user.profile_picture_url }}" 
+                         class="rounded-circle mb-3" 
+                         width="100" 
+                         height="100" 
+                         alt="{{ user.username }}">
+                    <h5 class="mb-1">{{ user.username }}</h5>
+                    <p class="text-muted small mb-2">
+                        <i class="bi bi-calendar me-1"></i> Membre depuis {{ user.created_at|format_date('short') }}
+                    </p>
+                    <div class="d-flex justify-content-center gap-2 mb-3">
+                        <div class="text-center px-2">
+                            <div class="fw-bold">{{ user.tontines_created.count() }}</div>
+                            <small class="text-muted">Tontines</small>
+                        </div>
+                        <div class="text-center px-2">
+                            <div class="fw-bold">{{ user.forum_topics.count() }}</div>
+                            <small class="text-muted">Sujets</small>
+                        </div>
+                        <div class="text-center px-2">
+                            <div class="fw-bold">{{ user.forum_posts.count() }}</div>
+                            <small class="text-muted">Messages</small>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary follow-btn" data-user-id="{{ user.id }}">
+                        <i class="bi bi-person-plus me-1"></i>
+                        <span class="follow-text">Suivre</span>
+                        <span class="badge bg-primary ms-1 follower-count">
+                            {{ user.followers.count() }}
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion du suivi des utilisateurs
+    document.querySelectorAll('.follow-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const userId = this.dataset.userId;
+            fetch(`/forum/users/${userId}/follow`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const followText = this.querySelector('.follow-text');
+                    const followerCount = this.querySelector('.follower-count');
+                    
+                    if (data.action === 'followed') {
+                        this.classList.add('btn-primary');
+                        this.classList.remove('btn-outline-primary');
+                        followText.textContent = 'Suivi';
+                        followerCount.textContent = data.follower_count;
+                    } else {
+                        this.classList.remove('btn-primary');
+                        this.classList.add('btn-outline-primary');
+                        followText.textContent = 'Suivre';
+                        followerCount.textContent = data.follower_count;
+                    }
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %}
