@@ -87,24 +87,24 @@
                                             </div>
                                             <div class="flex-shrink-0 ms-3">
                                                 <span class="badge bg-primary-light text-primary rounded-pill stats-badge">
-                                                    {{ category.topics.count() }} sujets
+                                                    {{ category.topics_count }} sujets
                                                 </span>
                                             </div>
                                         </div>
-                                        {% set last_topic = category.topics.order_by(ForumTopic.updated_at.desc()).first() %}
-                                        {% if last_topic %}
+
+                                        {% if category.last_topic %}
                                         <div class="d-flex align-items-center mt-2">
-                                            <img src="{{ last_topic.user.profile_picture_url }}" 
+                                            <img src="{{ category.last_topic.user.profile_picture_url }}" 
                                                  class="rounded-circle user-avatar me-2" 
-                                                 alt="{{ last_topic.user.username }}">
+                                                 alt="{{ category.last_topic.user.username }}">
                                             <div class="small">
                                                 <span class="d-block text-truncate">
-                                                    <a href="{{ url_for('forum_topic', category_slug=category.slug, topic_slug=last_topic.slug) }}" 
+                                                    <a href="{{ url_for('forum_topic', category_slug=category.slug, topic_slug=category.last_topic.slug) }}" 
                                                        class="text-decoration-none">
-                                                        {{ last_topic.title|truncate(30) }}
+                                                        {{ category.last_topic.title|truncate(30) }}
                                                     </a>
                                                 </span>
-                                                <span class="text-muted">{{ last_topic.updated_at|time_ago }}</span>
+                                                <span class="text-muted">{{ category.last_topic.updated_at|time_ago }}</span>
                                             </div>
                                         </div>
                                         {% endif %}
@@ -160,7 +160,7 @@
                                     </div>
                                     <div class="flex-shrink-0">
                                         <span class="badge bg-primary-light text-primary stats-badge">
-                                            {{ topic.posts.count() }} <i class="bi bi-chat-left-text"></i>
+                                            {{ topic.posts_count }} <i class="bi bi-chat-left-text"></i>
                                         </span>
                                     </div>
                                 </div>
@@ -216,7 +216,6 @@
                         <div class="empty-state py-4">
                             <i class="bi bi-bar-chart empty-state-icon"></i>
                             <h5 class="text-muted mb-3">Aucun sujet populaire</h5>
-                            <p class="small text-muted">Les sujets avec le plus de vues apparaîtront ici</p>
                         </div>
                     {% endif %}
                 </div>
@@ -224,27 +223,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Animation au survol des cartes
-    const cards = document.querySelectorAll('.category-card, .topic-card');
-    cards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.zIndex = 10;
-        });
-        card.addEventListener('mouseleave', function() {
-            this.style.zIndex = '';
-        });
-    });
-    
-    // Tooltips pour les éléments tronqués
-    const truncatedElements = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    truncatedElements.forEach(el => {
-        new bootstrap.Tooltip(el);
-    });
-});
-</script>
 {% endblock %}
