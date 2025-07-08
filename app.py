@@ -1012,17 +1012,6 @@ def wallet():
     return render_template('wallet/index.html', wallet=wallet, transactions=transactions)
 
 
-@app.route('/forum')
-def forum_home():
-    categories = ForumCategory.query.filter_by(is_active=True).order_by(ForumCategory.order).all()
-
-    # Pour chaque catégorie, récupère le dernier topic
-    for category in categories:
-        last_topic = category.topics.order_by(ForumTopic.updated_at.desc()).first()
-        category.last_topic = last_topic  # ajoute dynamiquement un attribut
-
-    return render_template('forum/index.html', categories=categories)
-
 
 @app.route('/wallet/deposit', methods=['GET', 'POST'])
 @login_required
