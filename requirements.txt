@@ -38,7 +38,7 @@ bootstrap-flask==2.3.3
 
 # Tests et développement
 pytest==7.4.0
-Faker==18.12.1
+Faker==13.3.0
 
 # Outils supplémentaires
 alembic==1.16.1
@@ -55,3 +55,4 @@ python-engineio==4.12.1
 simple-websocket==1.1.0
 wsproto==1.2.0
 typing_extensions==4.14.0
+
