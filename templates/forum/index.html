@@ -2,102 +2,249 @@
 
 {% block title %}Forum - TontinePlus{% endblock %}
 
+{% block extra_css %}
+<style>
+    .category-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--bs-primary);
+    }
+    .category-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .topic-card {
+        border-radius: 10px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    .topic-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+    }
+    .stats-badge {
+        font-size: 0.75rem;
+        padding: 0.35em 0.65em;
+    }
+    .empty-state {
+        padding: 3rem;
+        text-align: center;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+    }
+    .empty-state-icon {
+        font-size: 3rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-4">
-    <div class="row mb-4">
-        <div class="col">
-            <h1 class="display-5 fw-bold">Forum d'investissement</h1>
-            <p class="lead">Connectez-vous avec d'autres membres, partagez vos projets et trouvez des investisseurs</p>
+<div class="container py-5">
+    <!-- Header avec bouton d'action -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-5">
+        <div class="mb-3 mb-md-0">
+            <h1 class="display-5 fw-bold text-gradient-primary">Forum d'investissement</h1>
+            <p class="lead text-muted">Connectez-vous avec la communauté, partagez vos projets et trouvez des opportunités</p>
         </div>
+        <a href="{{ url_for('new_topic') }}" class="btn btn-primary btn-lg rounded-pill px-4">
+            <i class="bi bi-plus-lg me-2"></i> Nouveau sujet
+        </a>
     </div>
 
     <div class="row g-4">
-        <!-- Catégories principales -->
+        <!-- Colonne principale -->
         <div class="col-lg-8">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-grid-fill me-2"></i> Catégories</h5>
+            <!-- Catégories avec design moderne -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h3 class="mb-0 d-flex align-items-center">
+                        <i class="bi bi-grid-fill text-primary me-2"></i>
+                        <span>Catégories</span>
+                    </h3>
                 </div>
                 <div class="card-body p-0">
-                    {% for category in categories %}
-                    <div class="p-3 border-bottom">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-grow-1">
-                                <h5 class="mb-1">
-                                    <a href="{{ url_for('forum_category', category_slug=category.slug) }}" class="text-decoration-none">
-                                        {{ category.name }}
-                                    </a>
-                                </h5>
-                                <p class="text-muted small mb-0">{{ category.description }}</p>
+                    {% if categories %}
+                        <div class="row row-cols-1 row-cols-md-2 g-3 p-3">
+                            {% for category in categories %}
+                            <div class="col">
+                                <div class="category-card card h-100 border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-start">
+                                            <div class="flex-grow-1">
+                                                <h5 class="mb-2">
+                                                    <a href="{{ url_for('forum_category', category_slug=category.slug) }}" 
+                                                       class="text-decoration-none text-dark stretched-link">
+                                                        {{ category.name }}
+                                                    </a>
+                                                </h5>
+                                                <p class="text-muted small mb-3">{{ category.description }}</p>
+                                            </div>
+                                            <div class="flex-shrink-0 ms-3">
+                                                <span class="badge bg-primary-light text-primary rounded-pill stats-badge">
+                                                    {{ category.topics.count() }} sujets
+                                                </span>
+                                            </div>
+                                        </div>
+                                        {% set last_topic = category.topics.order_by(ForumTopic.updated_at.desc()).first() %}
+                                        {% if last_topic %}
+                                        <div class="d-flex align-items-center mt-2">
+                                            <img src="{{ last_topic.user.profile_picture_url }}" 
+                                                 class="rounded-circle user-avatar me-2" 
+                                                 alt="{{ last_topic.user.username }}">
+                                            <div class="small">
+                                                <span class="d-block text-truncate">
+                                                    <a href="{{ url_for('forum_topic', category_slug=category.slug, topic_slug=last_topic.slug) }}" 
+                                                       class="text-decoration-none">
+                                                        {{ last_topic.title|truncate(30) }}
+                                                    </a>
+                                                </span>
+                                                <span class="text-muted">{{ last_topic.updated_at|time_ago }}</span>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
                             </div>
-                            <div class="text-end">
-                                <small class="text-muted d-block">{{ category.topics.count() }} sujets</small>
-                                {% set last_topic = category.topics.order_by(ForumTopic.updated_at.desc()).first() %}
-                                {% if last_topic %}
-                                <small class="text-muted">
-                                    Dernier: 
-                                    <a href="{{ url_for('forum_topic', category_slug=category.slug, topic_slug=last_topic.slug) }}" class="text-decoration-none">
-                                        {{ last_topic.title|truncate(30) }}
-                                    </a>
-                                </small>
-                                {% endif %}
-                            </div>
+                            {% endfor %}
                         </div>
-                    </div>
-                    {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="bi bi-grid empty-state-icon"></i>
+                            <h5 class="text-muted mb-3">Aucune catégorie disponible</h5>
+                            {% if current_user.admin %}
+                            <a href="#" class="btn btn-primary rounded-pill px-4">
+                                <i class="bi bi-plus-circle me-1"></i> Créer une catégorie
+                            </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
 
-        <!-- Sidebar avec activités récentes -->
+        <!-- Sidebar -->
         <div class="col-lg-4">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-lightning-charge-fill me-2"></i> Sujets récents</h5>
+            <!-- Sujets récents -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h3 class="mb-0 d-flex align-items-center">
+                        <i class="bi bi-lightning-charge-fill text-warning me-2"></i>
+                        <span>Sujets récents</span>
+                    </h3>
                 </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        {% for topic in recent_topics %}
-                        <a href="{{ url_for('forum_topic', category_slug=topic.category.slug, topic_slug=topic.slug) }}" 
-                           class="list-group-item list-group-item-action border-0 py-2">
-                            <div class="d-flex align-items-center">
-                                <img src="{{ topic.user.profile_picture_url }}" 
-                                     class="rounded-circle me-2" 
-                                     width="32" 
-                                     height="32" 
-                                     alt="{{ topic.user.username }}">
-                                <div>
-                                    <h6 class="mb-0">{{ topic.title|truncate(40) }}</h6>
-                                    <small class="text-muted">
-                                        Par {{ topic.user.username }} • {{ topic.created_at|time_ago }}
-                                    </small>
+                <div class="card-body p-0">
+                    {% if recent_topics %}
+                        <div class="list-group list-group-flush">
+                            {% for topic in recent_topics %}
+                            <a href="{{ url_for('forum_topic', category_slug=topic.category.slug, topic_slug=topic.slug) }}" 
+                               class="list-group-item list-group-item-action border-0 py-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <img src="{{ topic.user.profile_picture_url }}" 
+                                             class="rounded-circle user-avatar me-3" 
+                                             alt="{{ topic.user.username }}">
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">{{ topic.title|truncate(50) }}</h6>
+                                        <div class="d-flex align-items-center small text-muted">
+                                            <span class="me-2">{{ topic.user.username }}</span>
+                                            <span class="me-2">•</span>
+                                            <span>{{ topic.created_at|time_ago }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-primary-light text-primary stats-badge">
+                                            {{ topic.posts.count() }} <i class="bi bi-chat-left-text"></i>
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
-                        </a>
-                        {% endfor %}
-                    </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                        <div class="card-footer bg-white border-0 py-3">
+                            <a href="#" class="btn btn-outline-primary btn-sm w-100">
+                                Voir plus de sujets <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="empty-state py-4">
+                            <i class="bi bi-chat-square-text empty-state-icon"></i>
+                            <h5 class="text-muted mb-3">Aucun sujet récent</h5>
+                            <a href="{{ url_for('new_topic') }}" class="btn btn-primary rounded-pill px-4">
+                                <i class="bi bi-plus-circle me-1"></i> Créer un sujet
+                            </a>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
 
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-fire me-2"></i> Sujets populaires</h5>
+            <!-- Sujets populaires -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h3 class="mb-0 d-flex align-items-center">
+                        <i class="bi bi-fire text-danger me-2"></i>
+                        <span>Sujets populaires</span>
+                    </h3>
                 </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        {% for topic in popular_topics %}
-                        <a href="{{ url_for('forum_topic', category_slug=topic.category.slug, topic_slug=topic.slug) }}" 
-                           class="list-group-item list-group-item-action border-0 py-2">
-                            <div class="d-flex justify-content-between">
-                                <span>{{ topic.title|truncate(30) }}</span>
-                                <span class="badge bg-primary rounded-pill">{{ topic.views }} vues</span>
-                            </div>
-                        </a>
-                        {% endfor %}
-                    </div>
+                <div class="card-body p-0">
+                    {% if popular_topics %}
+                        <div class="list-group list-group-flush">
+                            {% for topic in popular_topics %}
+                            <a href="{{ url_for('forum_topic', category_slug=topic.category.slug, topic_slug=topic.slug) }}" 
+                               class="list-group-item list-group-item-action border-0 py-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 me-3">
+                                        <span class="badge bg-danger rounded-pill stats-badge">
+                                            {{ topic.views }} <i class="bi bi-eye"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">{{ topic.title|truncate(40) }}</h6>
+                                        <small class="text-muted">{{ topic.category.name }}</small>
+                                    </div>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state py-4">
+                            <i class="bi bi-bar-chart empty-state-icon"></i>
+                            <h5 class="text-muted mb-3">Aucun sujet populaire</h5>
+                            <p class="small text-muted">Les sujets avec le plus de vues apparaîtront ici</p>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation au survol des cartes
+    const cards = document.querySelectorAll('.category-card, .topic-card');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.zIndex = 10;
+        });
+        card.addEventListener('mouseleave', function() {
+            this.style.zIndex = '';
+        });
+    });
+    
+    // Tooltips pour les éléments tronqués
+    const truncatedElements = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    truncatedElements.forEach(el => {
+        new bootstrap.Tooltip(el);
+    });
+});
+</script>
 {% endblock %}
