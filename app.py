@@ -2044,8 +2044,9 @@ def post_select_beneficiary():
     db.session.commit()
     flash("Bénéficiaire sélectionné avec succès", "success")
     return redirect(url_for('tontine_detail', tontine_id=tontine.id))
-# Route pour récupérer l'historique du chat
+    
 @app.route('/tontines/<int:tontine_id>/chat')
+@login_required
 def get_chat_history(tontine_id):
     messages = ChatMessage.query.filter_by(tontine_id=tontine_id)\
         .order_by(ChatMessage.timestamp.asc())\
