@@ -20,6 +20,7 @@ from dotenv import load_dotenv
 from sqlalchemy.exc import SQLAlchemyError
 from markupsafe import Markup
 from slugify import slugify
+import time
 
 # Charger les variables d'environnement depuis le fichier .env
 load_dotenv()
@@ -1771,7 +1772,8 @@ def campaign_detail(campaign_id):
     ).order_by(Donation.created_at.desc()).all()
 
     progress = (campaign.current_amount / campaign.target_amount) * 100 if campaign.target_amount > 0 else 0
-    creator = User.query.get(campaign.creator_id)
+    creator = db.session.get(User, campaign.creator_id)
+
 
     days_remaining = None
     if campaign.end_date:
