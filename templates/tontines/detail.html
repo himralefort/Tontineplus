@@ -341,6 +341,290 @@
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
+
+    /* Ultra Modern Additions */
+    .display-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        line-height: 1.2;
+    }
+
+    .badge-modern {
+        border-radius: 100px;
+        padding: 6px 12px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        font-size: 0.75rem;
+    }
+
+    .btn-neon {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        border: none;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-neon:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+        color: white;
+    }
+
+    .financial-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin: 25px 0;
+    }
+
+    .financial-card {
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(5px);
+        border-radius: 12px;
+        padding: 15px;
+        text-align: center;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .financial-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .financial-card .title {
+        font-size: 0.85rem;
+        color: #64748b;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .financial-card .amount {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--dark-color);
+    }
+
+    .member-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+    }
+
+    .member-card {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.6);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .member-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .member-card .info {
+        margin-left: 12px;
+        flex-grow: 1;
+    }
+
+    .member-card .name {
+        font-weight: 600;
+        margin-bottom: 2px;
+    }
+
+    .member-card .joined {
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    .cycle-timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .cycle-item {
+        position: relative;
+        padding-left: 30px;
+    }
+
+    .cycle-item::before {
+        content: '';
+        position: absolute;
+        left: 8px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e2e8f0;
+    }
+
+    .cycle-item:last-child::before {
+        bottom: calc(100% - 20px);
+    }
+
+    .cycle-item::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #cbd5e1;
+        z-index: 1;
+    }
+
+    .cycle-item.completed::after {
+        background: var(--success-color);
+    }
+
+    .cycle-item.current::after {
+        background: var(--primary-color);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+    }
+
+    .cycle-content {
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(5px);
+        border-radius: 12px;
+        padding: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .cycle-item:hover .cycle-content {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .cycle-status {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        border-radius: 100px;
+        font-weight: 600;
+        background: #e2e8f0;
+        color: #64748b;
+    }
+
+    .cycle-status.completed {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .cycle-status.current {
+        background: #e0e7ff;
+        color: #3730a3;
+    }
+
+    .transaction-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .transaction-card:last-child {
+        border-bottom: none;
+    }
+
+    .transaction-amount {
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .transaction-amount.deposit {
+        color: var(--success-color);
+    }
+
+    .transaction-amount.withdrawal {
+        color: var(--danger-color);
+    }
+
+    .list-group-item-modern {
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        margin-bottom: 8px;
+        border-radius: 8px !important;
+        transition: all 0.3s ease;
+    }
+
+    .list-group-item-modern:hover {
+        transform: translateX(5px);
+    }
+
+    .form-control-modern {
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .form-control-modern:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    .progress-container {
+        position: relative;
+    }
+
+    .progress-label {
+        position: relative;
+        z-index: 1;
+    }
+
+    .progress {
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 100px;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        transition: width 1s ease;
+    }
+
+    .avatar {
+        object-fit: cover;
+        transition: all 0.3s ease;
+    }
+
+    .avatar:hover {
+        transform: scale(1.1);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .display-title {
+            font-size: 2rem;
+        }
+        
+        .financial-summary {
+            grid-template-columns: 1fr;
+        }
+        
+        .member-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .chat-bubble-container {
+            width: 300px;
+            right: 10px;
+            bottom: 10px;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -462,12 +746,12 @@
                             <img src="{{ membership.user.profile_picture_url }}"
                                  alt="{{ membership.user.username }}"
                                  class="avatar me-2 rounded-circle"
-                                 width="100" height="100"
+                                 width="40" height="40"
                                  onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/default-avatar.png') }}';">
                             <span>{{ membership.user.username }}</span>
                         </div>
                         
-                        <div class="progress flex-grow-1" style="height: 24px;">
+                        <div class="progress flex-grow-1" style="height: 12px;">
                             <div class="progress-bar" 
                                 role="progressbar" 
                                 style="width: {{ contributions[membership.user_id]['percentage'] }}%" 
@@ -507,7 +791,7 @@
                     <div class="member-card">
                         <img src="{{ membership.user.profile_picture_url }}" 
                              class="avatar rounded-circle"
-                             width="64" height="64"
+                             width="48" height="48"
                              alt="{{ membership.user.username }}"
                              onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/default-avatar.png') }}';">
                         <div class="info">
