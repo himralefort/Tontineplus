@@ -414,3 +414,60 @@ img[alt*="Photo de profil"] {
     transform: translateY(-3px);
     transition: all 0.3s ease;
 }
+/* Animation flottante */
+.floating-animation {
+    animation: floating 3s ease-in-out infinite;
+}
+
+@keyframes floating {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
+    100% { transform: translateY(0px); }
+}
+
+/* Effet de survol */
+.hover-scale {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-scale:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(106, 17, 203, 0.1) !important;
+}
+
+.hover-violet:hover {
+    background-color: rgba(106, 17, 203, 0.05);
+}
+
+/* Cartes d'action */
+.action-card {
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+}
+
+.action-card:hover {
+    color: #6a11cb;
+}
+
+/* Boutons supplémentaires */
+.btn-violet {
+    background-color: #6a11cb;
+    color: white;
+    border: none;
+}
+
+.btn-violet:hover {
+    background-color: #5a0db3;
+    color: white;
+}
+
+.btn-outline-violet {
+    border: 1px solid #6a11cb;
+    color: #6a11cb;
+}
+
+.btn-outline-violet:hover {
+    background-color: #6a11cb;
+    color: white;
+}
