@@ -1,11 +1,22 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-bs-theme="auto">
 <head>
     {% include 'includes/head.html' %}
     {% block extra_css %}{% endblock %}
     <title>{% block title %}Tontine & Collecte Moderne{% endblock %}</title>
+    
+    <script>
+        // Gestion du thème (dark/light mode)
+        (function() {
+            const storedTheme = localStorage.getItem('theme');
+            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            const initialTheme = storedTheme ?? (systemDark ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-bs-theme', initialTheme);
+        })();
+    </script>
 </head>
-<body class="d-flex flex-column min-vh-100">
+<body class="d-flex flex-column min-vh-100 bg-light">
     {% include 'includes/navbar.html' %}
 
     <main class="flex-grow-1">
@@ -13,8 +24,11 @@
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                            {{ message }}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show glass-card" role="alert">
+                            <div class="d-flex align-items-center">
+                                <i class="bi {% if category == 'success' %}bi-check-circle-fill{% elif category == 'danger' %}bi-exclamation-triangle-fill{% else %}bi-info-circle-fill{% endif %} me-2"></i>
+                                <div>{{ message }}</div>
+                            </div>
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                     {% endfor %}
@@ -59,17 +73,31 @@
                         const badge = document.querySelector('.notification-badge');
                         if (badge) {
                             badge.textContent = data.count;
-                            badge.style.display = data.count > 0 ? 'inline-block' : 'none';
+                            badge.classList.toggle('d-none', data.count <= 0);
+                            badge.classList.toggle('pulse', data.count > 0);
                         }
                     });
             }
 
             function showToast(message) {
-                // Remplace par un toast Bootstrap si tu veux, ici juste un alert pour test
-                alert("🔔 Nouvelle notification: " + message);
+                const toast = new bootstrap.Toast(document.getElementById('liveToast'));
+                document.getElementById('toast-message').innerText = message;
+                toast.show();
             }
         });
     </script>
+    
+    <!-- Toast Notification -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+        <div id="liveToast" class="toast glass-card" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto">Nouvelle notification</strong>
+                <small>Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toast-message"></div>
+        </div>
+    </div>
     {% endif %}
 </body>
 </html>
