@@ -140,7 +140,6 @@
     </div>
 </section>
 {% endif %}
-
 <!-- Features Section -->
 <section class="py-5">
     <div class="container">
@@ -158,7 +157,7 @@
                         </div>
                         <h5>Tontine Immobilière</h5>
                         <p class="text-muted">Épargnez collectivement pour un achat immobilier avec notre système sécurisé.</p>
-                        <a href="#" class="btn btn-sm btn-violet-outline">Démarrer</a>
+                        <a href="{{ url_for('tontines_list') }}" class="btn btn-sm btn-violet-outline">Démarrer</a>
                     </div>
                 </div>
             </div>
@@ -170,7 +169,7 @@
                         </div>
                         <h5>Collecte de fonds</h5>
                         <p class="text-muted">Financez des projets personnels ou professionnels avec votre réseau.</p>
-                        <a href="#" class="btn btn-sm btn-violet-outline">Lancer une collecte</a>
+                        <a href="{{ url_for('campaigns') }}" class="btn btn-sm btn-violet-outline">Lancer une collecte</a>
                     </div>
                 </div>
             </div>
@@ -182,7 +181,7 @@
                         </div>
                         <h5>Suivi financier</h5>
                         <p class="text-muted">Analysez vos dépenses et épargnes avec nos outils visuels.</p>
-                        <a href="#" class="btn btn-sm btn-violet-outline">Voir statistiques</a>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-violet-outline">Voir statistiques</a>
                     </div>
                 </div>
             </div>
