@@ -279,3 +279,58 @@ a:hover {
         -webkit-backdrop-filter: blur(8px);
     }
 }
+/* Glassmorphism effect */
+.glass-card {
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    background-color: rgba(255, 255, 255, 0.85);
+    border-radius: 12px;
+    border: 1px solid rgba(209, 213, 219, 0.3);
+}
+
+[data-bs-theme="dark"] .glass-card {
+    background-color: rgba(17, 25, 40, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.125);
+}
+
+/* Notification pulse animation */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.pulse {
+    animation: pulse 1s infinite;
+}
+
+/* Toast notification */
+.toast.glass-card {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+[data-bs-theme="dark"] .toast.glass-card {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Navbar dark mode adjustments */
+[data-bs-theme="dark"] .navbar.bg-primary {
+    background-color: var(--bs-primary-dark) !important;
+}
+
+/* Smooth transitions */
+.navbar,
+.glass-card,
+.toast {
+    transition: all 0.3s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .glass-card {
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+}
