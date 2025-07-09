@@ -12,23 +12,26 @@
     </nav>
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">{{ category.name }}</h2>
+        <div>
+            <h2 class="mb-1">{{ category.name }}</h2>
+            <p class="text-muted mb-0">{{ category.description }}</p>
+        </div>
         <a href="{{ url_for('new_topic') }}" class="btn btn-primary">
             <i class="bi bi-plus-circle me-1"></i> Nouveau sujet
         </a>
     </div>
 
-    <p class="text-muted mb-4">{{ category.description }}</p>
-
     <div class="card shadow-sm">
         <div class="card-body p-0">
             {% for topic in topics %}
             <div class="p-3 border-bottom {% if topic.is_pinned %}bg-light{% endif %}">
-                <div class="d-flex">
+                <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
                         <h5 class="mb-1">
                             {% if topic.is_pinned %}
-                            <span class="badge bg-warning text-dark me-2"><i class="bi bi-pin-angle-fill"></i> Épinglé</span>
+                            <span class="badge bg-warning text-dark me-2">
+                                <i class="bi bi-pin-angle-fill"></i> Épinglé
+                            </span>
                             {% endif %}
                             <a href="{{ url_for('forum_topic', category_slug=category.slug, topic_slug=topic.slug) }}" 
                                class="text-decoration-none">
@@ -57,7 +60,10 @@
             </div>
             {% else %}
             <div class="p-4 text-center">
-                <img src="{{ url_for('static', filename='images/empty-forum.svg') }}" alt="Aucun sujet" class="img-fluid mb-3" style="max-height: 150px;">
+                <img src="{{ url_for('static', filename='images/empty-forum.svg') }}" 
+                     alt="Aucun sujet" 
+                     class="img-fluid mb-3" 
+                     style="max-height: 150px;">
                 <h5 class="text-muted">Aucun sujet dans cette catégorie</h5>
                 <p class="text-muted">Soyez le premier à lancer une discussion !</p>
                 <a href="{{ url_for('new_topic') }}" class="btn btn-primary">
