@@ -1410,5 +1410,79 @@
         document.getElementById('start-date').value = today;
         document.getElementById('end-date').value = nextWeekFormatted;
     });
+
+        // Dans votre script existant, ajoutez ces fonctions :
+        
+        let lastMessageTime = new Date().toISOString();
+        let notificationCheckInterval;
+        
+        function startNotificationCheck() {
+            // Vérifier les nouveaux messages toutes les 10 secondes
+            notificationCheckInterval = setInterval(checkForNewMessages, 10000);
+        }
+        
+        function stopNotificationCheck() {
+            clearInterval(notificationCheckInterval);
+        }
+        
+        function checkForNewMessages() {
+            if (isChatCollapsed) {
+                fetch(`/tontines/${room}/chat/unread?last_seen=${lastMessageTime}`)
+                    .then(response => response.json())
+                    .then(messages => {
+                        if (messages.length > 0) {
+                            // Mettre à jour le dernier message vu
+                            lastMessageTime = messages[0].timestamp;
+                            
+                            // Mettre à jour le badge de notification
+                            unreadMessages += messages.length;
+                            updateNotificationBadge();
+                            
+                            // Jouer un son de notification (optionnel)
+                            playNotificationSound();
+                        }
+                    });
+            }
+        }
+        
+        function playNotificationSound() {
+            const audio = new Audio('/static/sounds/notification.mp3');
+            audio.play().catch(e => console.log("Audio playback failed:", e));
+        }
+        
+        // Modifiez votre gestionnaire de messages pour mettre à jour lastMessageTime
+        socket.on('new_message', function(data) {
+            const isCurrentUser = data.user_id == currentUserId;
+            const messageElement = createMessageElement(data, isCurrentUser);
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Mettre à jour le temps du dernier message
+            lastMessageTime = data.timestamp;
+            
+            // Si chat est réduit ou message pas de l'utilisateur courant
+            if (isChatCollapsed || !isCurrentUser) {
+                unreadMessages++;
+                updateNotificationBadge();
+                
+                if (!isCurrentUser) {
+                    playNotificationSound();
+                }
+            }
+        });
+        
+        // Au chargement de la page, démarrez la vérification
+        document.addEventListener('DOMContentLoaded', function() {
+            startNotificationCheck();
+            
+            // Quand l'utilisateur ouvre le chat, réinitialiser les notifications
+            toggleChat.addEventListener('click', function() {
+                if (!isChatCollapsed) {
+                    unreadMessages = 0;
+                    updateNotificationBadge();
+                    lastMessageTime = new Date().toISOString();
+                }
+            });
+        });
 </script>
 {% endblock %}
