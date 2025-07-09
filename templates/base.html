@@ -11,7 +11,7 @@
             const storedTheme = localStorage.getItem('theme');
             const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             
-            const initialTheme = storedTheme ?? (systemDark ? 'dark' : 'light');
+            const initialTheme = storedTheme ?? 'light';
             document.documentElement.setAttribute('data-bs-theme', initialTheme);
         })();
     </script>
