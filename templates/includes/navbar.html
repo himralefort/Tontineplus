@@ -4,7 +4,7 @@
             <i class="bi bi-people-fill me-2"></i>
             <span>TontinePlus</span>
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
 
@@ -43,18 +43,26 @@
             <!-- Liens à droite -->
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                 {% if current_user.is_authenticated %}
+                    <!-- Dark/Light Mode Toggle -->
+                    <li class="nav-item d-flex align-items-center mx-2">
+                        <button id="theme-toggle" class="btn btn-sm btn-outline-light rounded-circle p-2" title="Changer de thème">
+                            <i class="bi bi-sun-fill d-none"></i>
+                            <i class="bi bi-moon-fill"></i>
+                        </button>
+                    </li>
+                    
                     <!-- Notifications -->
                     <li class="nav-item dropdown">
                         <a class="nav-link position-relative" href="#" id="notifDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-bell-fill"></i>
                             {% if current_user.unread_notifications > 0 %}
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger pulse">
                                 {{ current_user.unread_notifications }}
                                 <span class="visually-hidden">Notifications non lues</span>
                             </span>
                             {% endif %}
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end p-2" style="width: 300px;" aria-labelledby="notifDropdown">
+                        <ul class="dropdown-menu dropdown-menu-end p-2 glass-card" style="width: 300px; max-height: 400px; overflow-y: auto;" aria-labelledby="notifDropdown">
                             <li><h6 class="dropdown-header">Notifications récentes</h6></li>
                             {% for notification in current_user.recent_notifications %}
                             <li>
@@ -91,13 +99,14 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <img src="{{ current_user.profile_picture_url }}" 
-                                 class="rounded-circle me-2" 
+                                 class="rounded-circle me-2 border border-light border-2" 
                                  width="32" 
                                  height="32" 
-                                 alt="Photo de profil de {{ current_user.username }}">
+                                 alt="Photo de profil de {{ current_user.username }}"
+                                 onerror="this.src='{{ url_for('static', filename='images/default-profile.png') }}'">
                             <span>{{ current_user.username }}</span>
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <ul class="dropdown-menu dropdown-menu-end glass-card" aria-labelledby="userDropdown">
                             <li><a class="dropdown-item" href="{{ url_for('profile') }}"><i class="bi bi-person me-2"></i> Mon Profil</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('wallet') }}"><i class="bi bi-wallet2 me-2"></i> Mon Portefeuille</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('notifications') }}">
@@ -133,6 +142,26 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Gestion du thème
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        function updateThemeIcon() {
+            const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+            themeToggle.querySelector('.bi-sun-fill').classList.toggle('d-none', !isDark);
+            themeToggle.querySelector('.bi-moon-fill').classList.toggle('d-none', isDark);
+        }
+        
+        themeToggle.addEventListener('click', function() {
+            const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-bs-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon();
+        });
+        
+        updateThemeIcon();
+    }
+
     // Mise à jour périodique des notifications
     if (document.getElementById('notifDropdown')) {
         function updateNotificationBadge() {
@@ -143,12 +172,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.count > 0) {
                         if (!badge) {
                             const newBadge = document.createElement('span');
-                            newBadge.className = 'position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger';
+                            newBadge.className = 'position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger pulse';
                             newBadge.textContent = data.count;
                             newBadge.innerHTML += '<span class="visually-hidden">Notifications non lues</span>';
                             document.getElementById('notifDropdown').appendChild(newBadge);
                         } else {
                             badge.textContent = data.count;
+                            badge.classList.add('pulse');
                         }
                     } else if (badge) {
                         badge.remove();
@@ -156,7 +186,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         }
         
-        // Mettre à jour immédiatement et toutes les 30 secondes
         updateNotificationBadge();
         setInterval(updateNotificationBadge, 30000);
         
@@ -172,5 +201,12 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+
+    // Gestion des erreurs d'image de profil
+    document.querySelectorAll('img[onerror]').forEach(img => {
+        img.addEventListener('error', function() {
+            this.src = this.getAttribute('onerror').match(/this\.src='(.*?)'/)[1];
+        });
+    });
 });
 </script>
