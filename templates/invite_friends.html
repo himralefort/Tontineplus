@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section bg-gradient-violet text-white py-5">
+    <div class="container py-5">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-5 fw-bold mb-4">Invitez vos amis 🚀</h1>
+                <p class="lead mb-4">Gagnez des récompenses en parrainant vos proches sur TontinePlus.</p>
+            </div>
+            <div class="col-lg-6 d-none d-lg-block">
+                <img src="{{ url_for('static', filename='images/invite-friends.svg') }}" alt="Inviter des amis" class="img-fluid floating-animation">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Invitation Section -->
+<section class="py-5 bg-light-violet">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4 p-md-5">
+                        <h3 class="fw-bold mb-4 text-center">Votre lien de parrainage</h3>
+                        
+                        <div class="input-group mb-4">
+                            <input type="text" class="form-control" id="referralLink" 
+                                   value="{{ url_for('register', ref=current_user.public_id, _external=True) }}" readonly>
+                            <button class="btn btn-violet" type="button" id="copyLinkBtn">
+                                <i class="bi bi-clipboard me-2"></i>Copier
+                            </button>
+                        </div>
+                        
+                        <div class="text-center mb-4">
+                            <p class="text-muted">Partagez ce lien avec vos amis ou utilisez les options ci-dessous</p>
+                        </div>
+                        
+                        <div class="d-flex flex-wrap justify-content-center gap-3 mb-5">
+                            <button class="btn btn-outline-violet rounded-pill share-btn" data-platform="whatsapp">
+                                <i class="bi bi-whatsapp me-2"></i>WhatsApp
+                            </button>
+                            <button class="btn btn-outline-violet rounded-pill share-btn" data-platform="facebook">
+                                <i class="bi bi-facebook me-2"></i>Facebook
+                            </button>
+                            <button class="btn btn-outline-violet rounded-pill share-btn" data-platform="twitter">
+                                <i class="bi bi-twitter me-2"></i>Twitter
+                            </button>
+                            <button class="btn btn-outline-violet rounded-pill share-btn" data-platform="email">
+                                <i class="bi bi-envelope me-2"></i>Email
+                            </button>
+                        </div>
+                        
+                        <div class="alert alert-violet">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-gift-fill me-3 fs-4"></i>
+                                <div>
+                                    <h5 class="mb-1">Programme de parrainage</h5>
+                                    <p class="mb-0">Recevez 500 XOF pour chaque ami qui rejoint et effectue son premier dépôt.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Referral Stats -->
+        <div class="row mt-5">
+            <div class="col-md-4 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <h2 class="text-violet fw-bold">{{ referrals_count }}</h2>
+                        <p class="text-muted mb-0">Invitations envoyées</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <h2 class="text-violet fw-bold">{{ active_referrals }}</h2>
+                        <p class="text-muted mb-0">Amis actifs</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <h2 class="text-violet fw-bold">{{ rewards_earned|format_currency }} XOF</h2>
+                        <p class="text-muted mb-0">Récompenses gagnées</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How it Works -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Comment ça marche ?</h2>
+            <p class="text-muted">Invitez, gagnez et profitez ensemble</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100 hover-scale">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-xl bg-violet text-white rounded-circle mb-4 mx-auto">
+                            <i class="bi bi-person-plus"></i>
+                        </div>
+                        <h5>1. Partagez votre lien</h5>
+                        <p class="text-muted">Envoyez votre lien unique à vos amis via les réseaux sociaux, SMS ou email.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100 hover-scale">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-xl bg-violet text-white rounded-circle mb-4 mx-auto">
+                            <i class="bi bi-person-check"></i>
+                        </div>
+                        <h5>2. Vos amis s'inscrivent</h5>
+                        <p class="text-muted">Ils créent un compte et effectuent leur premier dépôt (minimum 5 000 XOF).</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100 hover-scale">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-xl bg-violet text-white rounded-circle mb-4 mx-auto">
+                            <i class="bi bi-coin"></i>
+                        </div>
+                        <h5>3. Recevez votre bonus</h5>
+                        <p class="text-muted">Vous gagnez 500 XOF crédités directement dans votre portefeuille.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Copy link functionality
+    const copyLinkBtn = document.getElementById('copyLinkBtn');
+    const referralLink = document.getElementById('referralLink');
+    
+    copyLinkBtn.addEventListener('click', function() {
+        referralLink.select();
+        document.execCommand('copy');
+        
+        // Change button text temporarily
+        const originalText = copyLinkBtn.innerHTML;
+        copyLinkBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Copié!';
+        
+        setTimeout(function() {
+            copyLinkBtn.innerHTML = originalText;
+        }, 2000);
+    });
+    
+    // Share buttons functionality
+    document.querySelectorAll('.share-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const platform = this.getAttribute('data-platform');
+            const message = "Rejoins-moi sur TontinePlus, la plateforme de tontines en ligne sécurisée ! ";
+            const url = referralLink.value;
+            
+            let shareUrl = '';
+            
+            switch(platform) {
+                case 'whatsapp':
+                    shareUrl = `https://wa.me/?text=${encodeURIComponent(message + url)}`;
+                    break;
+                case 'facebook':
+                    shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+                    break;
+                case 'twitter':
+                    shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(url)}`;
+                    break;
+                case 'email':
+                    shareUrl = `mailto:?subject=Rejoins%20moi%20sur%20TontinePlus&body=${encodeURIComponent(message + url)}`;
+                    break;
+            }
+            
+            if (shareUrl) {
+                window.open(shareUrl, '_blank');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

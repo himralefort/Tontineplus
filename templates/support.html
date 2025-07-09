@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section bg-gradient-violet text-white py-5">
+    <div class="container py-5">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-5 fw-bold mb-4">Centre d'aide ✨</h1>
+                <p class="lead mb-4">Trouvez les réponses à vos questions ou contactez notre équipe.</p>
+                <div class="search-box">
+                    <form action="{{ url_for('support') }}" method="GET">
+                        <div class="input-group">
+                            <input type="text" class="form-control form-control-lg" 
+                                   placeholder="Rechercher dans l'aide..." name="q" value="{{ search_query }}">
+                            <button class="btn btn-light" type="submit">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="col-lg-6 d-none d-lg-block">
+                <img src="{{ url_for('static', filename='images/support.svg') }}" alt="Support" class="img-fluid floating-animation">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Help Categories -->
+<section class="py-5 bg-light-violet">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Catégories d'aide</h2>
+            <p class="text-muted">Parcourez nos guides par thème</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <a href="#tontines" class="card category-card border-0 shadow-sm hover-scale text-decoration-none">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-xl bg-violet text-white rounded-circle mb-4 mx-auto">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <h5 class="text-dark">Tontines</h5>
+                        <p class="text-muted">Création, gestion et participation</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="#payments" class="card category-card border-0 shadow-sm hover-scale text-decoration-none">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-xl bg-violet text-white rounded-circle mb-4 mx-auto">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                        <h5 class="text-dark">Paiements</h5>
+                        <p class="text-muted">Dépôts, retraits et transactions</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="#account" class="card category-card border-0 shadow-sm hover-scale text-decoration-none">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-xl bg-violet text-white rounded-circle mb-4 mx-auto">
+                            <i class="bi bi-person"></i>
+                        </div>
+                        <h5 class="text-dark">Compte</h5>
+                        <p class="text-muted">Profil et paramètres</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="#security" class="card category-card border-0 shadow-sm hover-scale text-decoration-none">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-xl bg-violet text-white rounded-circle mb-4 mx-auto">
+                            <i class="bi bi-shield-lock"></i>
+                        </div>
+                        <h5 class="text-dark">Sécurité</h5>
+                        <p class="text-muted">Protection de votre compte</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="#troubleshooting" class="card category-card border-0 shadow-sm hover-scale text-decoration-none">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-xl bg-violet text-white rounded-circle mb-4 mx-auto">
+                            <i class="bi bi-tools"></i>
+                        </div>
+                        <h5 class="text-dark">Dépannage</h5>
+                        <p class="text-muted">Problèmes techniques</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="#faq" class="card category-card border-0 shadow-sm hover-scale text-decoration-none">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-xl bg-violet text-white rounded-circle mb-4 mx-auto">
+                            <i class="bi bi-question-circle"></i>
+                        </div>
+                        <h5 class="text-dark">FAQ</h5>
+                        <p class="text-muted">Questions fréquentes</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Search Results or Popular Articles -->
+<section class="py-5" id="search-results">
+    <div class="container">
+        {% if search_query %}
+        <h3 class="fw-bold mb-4">Résultats pour "{{ search_query }}"</h3>
+        
+        {% if search_results %}
+        <div class="accordion" id="searchResultsAccordion">
+            {% for article in search_results %}
+            <div class="accordion-item border-0 mb-3 shadow-sm">
+                <h2 class="accordion-header" id="heading{{ loop.index }}">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                            data-bs-target="#collapse{{ loop.index }}" aria-expanded="false" 
+                            aria-controls="collapse{{ loop.index }}">
+                        {{ article.title }}
+                    </button>
+                </h2>
+                <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" 
+                     aria-labelledby="heading{{ loop.index }}" data-bs-parent="#searchResultsAccordion">
+                    <div class="accordion-body">
+                        {{ article.content|markdown }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <img src="{{ url_for('static', filename='images/no-results.svg') }}" alt="Aucun résultat" class="img-fluid mb-4" style="max-height: 150px;">
+            <h5 class="mb-3">Aucun résultat trouvé</h5>
+            <p class="text-muted">Essayez d'autres termes de recherche ou parcourez nos catégories d'aide.</p>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Articles populaires</h2>
+            <p class="text-muted">Les questions les plus fréquemment posées</p>
+        </div>
+        
+        <div class="row g-4">
+            {% for article in popular_articles %}
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100 hover-scale">
+                    <div class="card-body p-4">
+                        <h5 class="mb-3">{{ article.title }}</h5>
+                        <p class="text-muted mb-4">{{ article.summary }}</p>
+                        <a href="#article-{{ loop.index }}" class="btn btn-sm btn-violet-outline" data-bs-toggle="collapse">
+                            Voir plus <i class="bi bi-chevron-down"></i>
+                        </a>
+                        <div class="collapse mt-3" id="article-{{ loop.index }}">
+                            <div class="card card-body border-0 bg-light">
+                                {{ article.content|markdown }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Contact Support -->
+<section class="py-5 bg-light-violet" id="contact">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4 p-md-5">
+                        <h3 class="fw-bold mb-4 text-center">Contactez notre support</h3>
+                        <p class="text-muted text-center mb-5">Notre équipe est disponible 7j/7 pour vous aider</p>
+                        
+                        <form method="POST" action="{{ url_for('submit_support_request') }}">
+                            <div class="mb-4">
+                                <label for="subject" class="form-label">Sujet</label>
+                                <select class="form-select" id="subject" name="subject" required>
+                                    <option value="" selected disabled>Sélectionnez un sujet</option>
+                                    <option value="technical">Problème technique</option>
+                                    <option value="account">Problème de compte</option>
+                                    <option value="payment">Question sur les paiements</option>
+                                    <option value="tontine">Question sur les tontines</option>
+                                    <option value="other">Autre question</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="message" class="form-label">Message</label>
+                                <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-violet btn-lg px-5 rounded-pill">
+                                    <i class="bi bi-send me-2"></i>Envoyer la demande
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div class="row mt-5 text-center">
+                            <div class="col-md-4 mb-4 mb-md-0">
+                                <div class="icon-md bg-violet text-white rounded-circle mb-3 mx-auto">
+                                    <i class="bi bi-telephone"></i>
+                                </div>
+                                <h5>Par téléphone</h5>
+                                <p class="text-muted mb-1">+225 XX XX XX XX</p>
+                                <small class="text-muted">Lun-Ven, 8h-18h</small>
+                            </div>
+                            <div class="col-md-4 mb-4 mb-md-0">
+                                <div class="icon-md bg-violet text-white rounded-circle mb-3 mx-auto">
+                                    <i class="bi bi-envelope"></i>
+                                </div>
+                                <h5>Par email</h5>
+                                <p class="text-muted">support@tontineplus.com</p>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="icon-md bg-violet text-white rounded-circle mb-3 mx-auto">
+                                    <i class="bi bi-chat-dots"></i>
+                                </div>
+                                <h5>Chat en direct</h5>
+                                <button class="btn btn-sm btn-violet-outline" id="liveChatBtn">
+                                    <i class="bi bi-chat-left-text me-2"></i>Démarrer le chat
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Live chat button functionality
+    const liveChatBtn = document.getElementById('liveChatBtn');
+    
+    liveChatBtn.addEventListener('click', function() {
+        // In a real app, this would open a live chat widget
+        alert('Le chat en direct sera disponible bientôt. En attendant, vous pouvez nous contacter par email ou téléphone.');
+    });
+    
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const targetId = this.getAttribute('href');
+            if (targetId === '#') return;
+            
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
