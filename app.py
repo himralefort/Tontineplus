@@ -1792,6 +1792,11 @@ def campaign_detail(campaign_id):
     )
 
 
+
+@app.route('/invite-friends')
+def invite_friends():
+    return render_template('invite_friends.html')
+
 @app.route('/tontine/<int:tontine_id>/chat')
 @login_required
 def tontine_chat(tontine_id):
