@@ -1794,13 +1794,69 @@ def campaign_detail(campaign_id):
 
 
 @app.route('/invite-friends')
+@login_required
 def invite_friends():
-    return render_template('invite_friends.html')
-
+    # Récupérer les statistiques de parrainage (à adapter selon votre modèle de données)
+    referrals_count = 0  # À remplacer par votre logique
+    active_referrals = 0  # À remplacer par votre logique
+    rewards_earned = 0  # À remplacer par votre logique
+    
+    return render_template('invite_friends.html',
+                         referrals_count=referrals_count,
+                         active_referrals=active_referrals,
+                         rewards_earned=rewards_earned)
 
 @app.route('/support')
 def support():
-    return render_template('support.html')
+    search_query = request.args.get('q', '').strip()
+    search_results = []
+    
+    # Articles populaires (à remplacer par vos données réelles)
+    popular_articles = [
+        {
+            'title': "Comment créer une tontine ?",
+            'summary': "Guide étape par étape pour créer votre première tontine.",
+            'content': "### Création d'une tontine\n\n1. Cliquez sur 'Créer une tontine' dans votre tableau de bord\n2. Remplissez les détails (nom, montant, fréquence)\n3. Invitez des membres\n4. Lancez votre tontine!"
+        },
+        {
+            'title': "Problèmes de connexion",
+            'summary': "Que faire si vous ne pouvez pas vous connecter à votre compte.",
+            'content': "### Résolution des problèmes de connexion\n\n1. Vérifiez votre connexion internet\n2. Réinitialisez votre mot de passe si nécessaire\n3. Contactez le support si le problème persiste"
+        },
+        {
+            'title': "Comment effectuer un dépôt ?",
+            'summary': "Toutes les méthodes de dépôt disponibles sur TontinePlus.",
+            'content': "### Méthodes de dépôt\n\n- Mobile Money\n- Carte bancaire\n- Virement\n- Espèces chez nos partenaires"
+        },
+        {
+            'title': "Sécurité du compte",
+            'summary': "Comment protéger votre compte TontinePlus.",
+            'content': "### Conseils de sécurité\n\n- Utilisez un mot de passe fort\n- Activez la vérification en 2 étapes\n- Ne partagez jamais vos identifiants"
+        }
+    ]
+    
+    if search_query:
+        # Recherche dans les articles (simplifié pour l'exemple)
+        search_results = [article for article in popular_articles 
+                         if search_query.lower() in article['title'].lower() 
+                         or search_query.lower() in article['content'].lower()]
+    
+    return render_template('support.html',
+                         search_query=search_query,
+                         search_results=search_results,
+                         popular_articles=popular_articles)
+
+@app.route('/submit-support-request', methods=['POST'])
+@login_required
+def submit_support_request():
+    subject = request.form.get('subject')
+    message = request.form.get('message')
+    
+    # Ici, vous devriez enregistrer la demande dans la base de données
+    # et/ou envoyer un email au support
+    
+    flash("Votre demande a été envoyée. Nous vous répondrons dans les plus brefs délais.", "success")
+    return redirect(url_for('support'))
 
 
 @app.route('/tontine/<int:tontine_id>/chat')
