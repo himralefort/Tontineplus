@@ -1849,6 +1849,31 @@ def clear_notifications():
     flash("Toutes les notifications ont été supprimées.", "success")
     return redirect(url_for('notifications'))  # ou 'dashboard' ou autre page
 
+@app.route('/tontines/<int:tontine_id>/chat/unread')
+@login_required
+def get_unread_messages(tontine_id):
+    last_seen = request.args.get('last_seen')
+    if not last_seen:
+        return jsonify([])
+    
+    try:
+        last_seen_dt = datetime.fromisoformat(last_seen)
+    except ValueError:
+        return jsonify([])
+    
+    messages = ChatMessage.query.filter(
+        ChatMessage.tontine_id == tontine_id,
+        ChatMessage.user_id != current_user.id,
+        ChatMessage.timestamp > last_seen_dt
+    ).order_by(ChatMessage.timestamp.desc()).all()
+    
+    return jsonify([{
+        'id': msg.id,
+        'sender': msg.user.username,
+        'message': msg.content,
+        'timestamp': msg.timestamp.isoformat(),
+        'avatar': msg.user.profile_picture_url
+    } for msg in messages])
 @app.route('/tontine/<int:tontine_id>/manage')
 @login_required
 def tontine_manage(tontine_id):
