@@ -2,12 +2,12 @@
 
 {% block content %}
 <!-- Hero Section Modern -->
-<section class="hero-section bg-gradient-primary text-white py-5">
+<section class="hero-section bg-gradient-violet text-white py-5">
     <div class="container py-5">
         <div class="row align-items-center">
             <div class="col-lg-6">
-                <h1 class="display-4 fw-bold mb-4">Gestion de tontines 2.0</h1>
-                <p class="lead mb-4">La plateforme ultime pour gérer vos tontines et collectes en toute transparence.</p>
+                <h1 class="display-4 fw-bold mb-4">Gestion de tontines nouvelle génération</h1>
+                <p class="lead mb-4">La plateforme ultime pour gérer vos tontines, collectes de fonds et projets communautaires en toute transparence.</p>
                 <div class="d-flex gap-3">
                     <a href="{{ url_for('login') }}" class="btn btn-light btn-lg px-4 rounded-pill shadow">
                         <i class="bi bi-box-arrow-in-right me-2"></i>Se connecter
@@ -29,40 +29,174 @@
     <div class="container">
         <div class="text-center mb-5">
             <h2 class="fw-bold">Pourquoi choisir notre plateforme ?</h2>
-            <p class="text-muted">Une expérience complète et sécurisée</p>
+            <p class="text-muted">Une expérience complète et sécurisée pour vos finances communautaires</p>
         </div>
 
         <div class="row g-4">
             <div class="col-md-4">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-body text-center p-4">
-                        <div class="icon-lg bg-primary-light text-primary rounded-circle mb-4 mx-auto">
+                        <div class="icon-lg bg-violet-light text-violet rounded-circle mb-4 mx-auto">
                             <i class="bi bi-shield-lock fs-3"></i>
                         </div>
                         <h5>Sécurité maximale</h5>
-                        <p class="text-muted">Toutes vos transactions sont chiffrées et protégées.</p>
+                        <p class="text-muted">Toutes vos transactions sont chiffrées et protégées avec technologie blockchain.</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-body text-center p-4">
-                        <div class="icon-lg bg-primary-light text-primary rounded-circle mb-4 mx-auto">
+                        <div class="icon-lg bg-violet-light text-violet rounded-circle mb-4 mx-auto">
                             <i class="bi bi-graph-up-arrow fs-3"></i>
                         </div>
                         <h5>Transparence totale</h5>
-                        <p class="text-muted">Suivez chaque contribution en temps réel.</p>
+                        <p class="text-muted">Historique complet des contributions et notifications en temps réel.</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-body text-center p-4">
-                        <div class="icon-lg bg-primary-light text-primary rounded-circle mb-4 mx-auto">
+                        <div class="icon-lg bg-violet-light text-violet rounded-circle mb-4 mx-auto">
                             <i class="bi bi-phone fs-3"></i>
                         </div>
                         <h5>Accès mobile</h5>
-                        <p class="text-muted">Gérez vos tontines depuis n'importe où.</p>
+                        <p class="text-muted">Application disponible sur iOS et Android pour gérer vos fonds partout.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Tontine Section -->
+<section class="py-5 bg-light-violet">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <img src="{{ url_for('static', filename='images/tontine.jpg') }}" alt="Tontine" class="img-fluid rounded shadow">
+            </div>
+            <div class="col-lg-6">
+                <h2 class="fw-bold mb-4">Tontine digitale pour tous vos projets</h2>
+                <div class="d-flex mb-3">
+                    <div class="me-4">
+                        <div class="icon-md bg-violet text-white rounded-circle mb-2">
+                            <i class="bi bi-house-door"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h5>Achat immobilier</h5>
+                        <p class="text-muted">Constituer un apport pour maison ou terrain en groupe avec notre système rotatif ou aléatoire.</p>
+                    </div>
+                </div>
+                <div class="d-flex mb-3">
+                    <div class="me-4">
+                        <div class="icon-md bg-violet text-white rounded-circle mb-2">
+                            <i class="bi bi-car-front"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h5>Acquisition de véhicule</h5>
+                        <p class="text-muted">Tontines spéciales voiture avec échéancier personnalisé et suivi des versements.</p>
+                    </div>
+                </div>
+                <div class="d-flex">
+                    <div class="me-4">
+                        <div class="icon-md bg-violet text-white rounded-circle mb-2">
+                            <i class="bi bi-phone"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h5>Équipements électroniques</h5>
+                        <p class="text-muted">Smartphones, ordinateurs et autres appareils accessibles grâce à l'épargne collective.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Collecte de fonds Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 order-lg-2 mb-4 mb-lg-0">
+                <img src="{{ url_for('static', filename='images/crowdfunding.jpg') }}" alt="Collecte de fonds" class="img-fluid rounded shadow">
+            </div>
+            <div class="col-lg-6 order-lg-1">
+                <h2 class="fw-bold mb-4">Collecte de fonds intelligente</h2>
+                <div class="feature-card bg-white p-4 rounded shadow-sm mb-4">
+                    <h5><i class="bi bi-bullseye text-violet me-2"></i> Objectifs flexibles</h5>
+                    <p class="text-muted mb-0">Définissez des paliers de financement avec dates butoirs et montants cibles ajustables.</p>
+                </div>
+                <div class="feature-card bg-white p-4 rounded shadow-sm mb-4">
+                    <h5><i class="bi bi-people-fill text-violet me-2"></i> Gestion des contributeurs</h5>
+                    <p class="text-muted mb-0">Suivi individuel des participants avec système de rappels automatisés et remerciements personnalisés.</p>
+                </div>
+                <div class="feature-card bg-white p-4 rounded shadow-sm">
+                    <h5><i class="bi bi-cash-stack text-violet me-2"></i> Multiples canaux de paiement</h5>
+                    <p class="text-muted mb-0">Mobile money, cartes bancaires, virements et paiements en espèces traçables.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Use Cases Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Nos solutions adaptées à vos besoins</h2>
+            <p class="text-muted">Découvrez comment nous révolutionnons la gestion des fonds collectifs</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-0 shadow-sm-hover">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-xl bg-violet text-white rounded-circle mb-4 mx-auto">
+                            <i class="bi bi-building"></i>
+                        </div>
+                        <h4>Tontine immobilière</h4>
+                        <p class="text-muted">Épargne collective pour acquisition de logements avec système de tirage au sort équitable.</p>
+                        <a href="#" class="btn btn-sm btn-violet-outline">En savoir plus</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-0 shadow-sm-hover">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-xl bg-violet text-white rounded-circle mb-4 mx-auto">
+                            <i class="bi bi-heart-pulse"></i>
+                        </div>
+                        <h4>Collecte médicale</h4>
+                        <p class="text-muted">Financement participatif pour frais de santé avec preuves médicales et suivi des dépenses.</p>
+                        <a href="#" class="btn btn-sm btn-violet-outline">En savoir plus</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-0 shadow-sm-hover">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-xl bg-violet text-white rounded-circle mb-4 mx-auto">
+                            <i class="bi bi-mortarboard"></i>
+                        </div>
+                        <h4>Éducation</h4>
+                        <p class="text-muted">Cagnottes scolaires avec gestion des bénéficiaires et paiement direct aux établissements.</p>
+                        <a href="#" class="btn btn-sm btn-violet-outline">En savoir plus</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-0 shadow-sm-hover">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-xl bg-violet text-white rounded-circle mb-4 mx-auto">
+                            <i class="bi bi-briefcase"></i>
+                        </div>
+                        <h4>Entrepreneuriat</h4>
+                        <p class="text-muted">Capital de démarrage pour petites entreprises avec suivi des investissements.</p>
+                        <a href="#" class="btn btn-sm btn-violet-outline">En savoir plus</a>
                     </div>
                 </div>
             </div>
@@ -71,17 +205,17 @@
 </section>
 
 <!-- Final CTA Section -->
-<section class="py-5 bg-light">
+<section class="py-5 bg-gradient-violet text-white">
     <div class="container text-center">
-        <h2 class="fw-bold mb-3">Prêt à nous rejoindre ?</h2>
-        <p class="lead text-muted mb-4">
-            Rejoignez des milliers de personnes qui gèrent leurs finances en communauté.
+        <h2 class="fw-bold mb-3">Prêt à révolutionner vos finances communautaires ?</h2>
+        <p class="lead mb-4">
+            Rejoignez la première plateforme digitale alliant tontines intelligentes et collecte de fonds transparente.
         </p>
         <div class="d-flex justify-content-center gap-3">
-            <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg px-4 rounded-pill">
+            <a href="{{ url_for('register') }}" class="btn btn-light btn-lg px-4 rounded-pill shadow">
                 <i class="bi bi-person-plus me-2"></i>Créer un compte
             </a>
-            <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg px-4 rounded-pill">
+            <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg px-4 rounded-pill">
                 <i class="bi bi-box-arrow-in-right me-2"></i>Se connecter
             </a>
         </div>
