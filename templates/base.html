@@ -3,7 +3,7 @@
 <head>
     {% include 'includes/head.html' %}
     {% block extra_css %}{% endblock %}
-    <title>{% block title %}Tontine & Collecte Moderne{% endblock %}</title>
+    <title>{% block title %}TontinePlus{% endblock %}</title>
     
     <script>
         // Gestion du thème (dark/light mode)
@@ -16,7 +16,7 @@
         })();
     </script>
 </head>
-<body class="d-flex flex-column min-vh-100 bg-light">
+<body class="d-flex flex-column min-vh-100 bg-body">
     {% include 'includes/navbar.html' %}
 
     <main class="flex-grow-1">
@@ -44,60 +44,63 @@
     {% block extra_js %}{% endblock %}
 
     {% if current_user.is_authenticated %}
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Gestion annulation demande
-            document.querySelectorAll('.cancel-request').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    if (!confirm("Annuler cette demande ?")) {
-                        e.preventDefault();
-                    }
-                });
-            });
-
-            // Socket.IO pour notifications
-            if (typeof io !== 'undefined') {
-                const socket = io('/notifications');
-                socket.on('new_notification', function(data) {
-                    if (data.user_id === {{ current_user.id|tojson }}) {
-                        updateNotificationCount();
-                        showToast(data.message);
-                    }
-                });
-            }
-
-            function updateNotificationCount() {
-                fetch('{{ url_for("notifications_count") }}')
-                    .then(response => response.json())
-                    .then(data => {
-                        const badge = document.querySelector('.notification-badge');
-                        if (badge) {
-                            badge.textContent = data.count;
-                            badge.classList.toggle('d-none', data.count <= 0);
-                            badge.classList.toggle('pulse', data.count > 0);
-                        }
-                    });
-            }
-
-            function showToast(message) {
-                const toast = new bootstrap.Toast(document.getElementById('liveToast'));
-                document.getElementById('toast-message').innerText = message;
-                toast.show();
-            }
-        });
-    </script>
-    
     <!-- Toast Notification -->
     <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
         <div id="liveToast" class="toast glass-card" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="toast-header">
                 <strong class="me-auto">Nouvelle notification</strong>
-                <small>Maintenant</small>
+                <small class="text-muted">À l'instant</small>
                 <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
             <div class="toast-body" id="toast-message"></div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Socket.IO pour notifications
+            if (typeof io !== 'undefined') {
+                const socket = io('/notifications');
+                socket.on('new_notification', function(data) {
+                    if (data.user_id === {{ current_user.id|tojson }}) {
+                        updateNotificationBadge();
+                        showToast(data.message);
+                    }
+                });
+            }
+
+            function showToast(message) {
+                const toastEl = document.getElementById('liveToast');
+                const toastBody = document.getElementById('toast-message');
+                toastBody.innerText = message;
+                
+                const toast = bootstrap.Toast.getOrCreateInstance(toastEl);
+                toast.show();
+            }
+
+            function updateNotificationBadge() {
+                fetch('{{ url_for("notifications_count") }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        const badge = document.querySelector('#notifDropdown .badge');
+                        if (data.count > 0) {
+                            if (!badge) {
+                                const newBadge = document.createElement('span');
+                                newBadge.className = 'position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger pulse';
+                                newBadge.textContent = data.count;
+                                newBadge.innerHTML += '<span class="visually-hidden">Notifications non lues</span>';
+                                document.getElementById('notifDropdown').appendChild(newBadge);
+                            } else {
+                                badge.textContent = data.count;
+                                badge.classList.add('pulse');
+                            }
+                        } else if (badge) {
+                            badge.remove();
+                        }
+                    });
+            }
+        });
+    </script>
     {% endif %}
 </body>
 </html>
