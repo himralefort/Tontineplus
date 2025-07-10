@@ -114,70 +114,32 @@
 <div class="forum-container">
     <!-- Hero Section -->
     <div class="hero-section">
-        <h1 class="display-4 fw-bold mb-3">Bienvenue sur le Forum TontinePlus</h1>
-        <p class="lead mb-4">Connectez-vous avec des investisseurs et porteurs de projets. Partagez vos idées et découvrez des opportunités de tontines et d'investissements.</p>
+        <h1 class="display-4 fw-bold mb-3">Forum des Investisseurs</h1>
+        <p class="lead mb-4">Connectez-vous avec des investisseurs et porteurs de projets. Partagez des idées, découvrez des opportunités et collaborez sur des tontines et projets d'investissement.</p>
+        {% if current_user.is_authenticated %}
         <a href="{{ url_for('new_topic') }}" class="btn btn-light btn-lg action-btn">
             <i class="bi bi-plus-lg me-2"></i> Créer un sujet
         </a>
+        {% else %}
+        <a href="{{ url_for('login') }}" class="btn btn-light btn-lg action-btn">
+            <i class="bi bi-box-arrow-in-right me-2"></i> Connectez-vous pour participer
+        </a>
+        {% endif %}
     </div>
 
     <div class="row">
         <!-- Main Content -->
         <div class="col-lg-9">
-            <!-- Recent Topics Section -->
-            <div class="mb-4">
-                <h3 class="mb-3"><i class="bi bi-chat-square-text-fill me-2"></i>Derniers sujets</h3>
-                {% if recent_topics %}
-                <div class="category-grid">
-                    {% for topic in recent_topics %}
-                    <div class="category-card">
-                        <div class="category-header">
-                            <h5 class="mb-1">
-                                <a href="{{ url_for('forum_topic', category_slug=topic.category.slug, topic_slug=topic.slug) }}" 
-                                   class="text-decoration-none text-dark">
-                                    {{ topic.title }}
-                                </a>
-                            </h5>
-                            <p class="text-muted small mb-0">Dans {{ topic.category.name }}</p>
-                        </div>
-                        <div class="category-body">
-                            <div class="topic-preview">
-                                <img src="{{ topic.user.profile_picture_url or '/static/images/default_avatar.png' }}" 
-                                     class="user-avatar" 
-                                     alt="{{ topic.user.username }}">
-                                <div class="flex-grow-1">
-                                    <div class="topic-meta small text-muted">
-                                        Par {{ topic.user.username }} • {{ topic.created_at|time_ago }}
-                                    </div>
-                                    <div class="text-muted small mt-1">{{ topic.content|truncate(100) }}</div>
-                                </div>
-                                <span class="stats-badge">{{ topic.replies_count }} réponses</span>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="empty-state">
-                    <i class="bi bi-chat-square-text display-4 text-muted mb-3"></i>
-                    <h5 class="text-muted mb-3">Aucun sujet récent</h5>
-                    <a href="{{ url_for('new_topic') }}" class="btn btn-primary action-btn">
-                        <i class="bi bi-plus-circle me-2"></i> Créer un sujet
-                    </a>
-                </div>
-                {% endif %}
-            </div>
-
             <!-- Categories Section -->
             <div class="mb-4">
-                <h3 class="mb-3"><i class="bi bi-grid-fill me-2"></i>Catégories</h3>
+                <h3 class="mb-3"><i class="bi bi-grid-fill me-2"></i>Catégories populaires</h3>
                 {% if categories %}
                 <div class="category-grid">
                     {% for category in categories %}
                     <div class="category-card">
                         <div class="category-header">
                             <h5 class="mb-1">
-                                <a href="{{ url_for('forum_category', category_slug=category.slug) }}" 
+                                <a href="{{ url_for('forum_category', category_slug=category.slug) }}"
                                    class="text-decoration-none text-dark">
                                     {{ category.name }}
                                 </a>
@@ -187,11 +149,11 @@
                         <div class="category-body">
                             {% if category.last_topic %}
                             <div class="topic-preview">
-                                <img src="{{ category.last_topic.user.profile_picture_url or '/static/images/default_avatar.png' }}" 
-                                     class="user-avatar" 
+                                <img src="{{ category.last_topic.user.profile_picture_url }}"
+                                     class="user-avatar"
                                      alt="{{ category.last_topic.user.username }}">
                                 <div class="flex-grow-1">
-                                    <a href="{{ url_for('forum_topic', category_slug=category.slug, topic_slug=category.last_topic.slug) }}" 
+                                    <a href="{{ url_for('forum_topic', category_slug=category.slug, topic_slug=category.last_topic.slug) }}"
                                        class="text-decoration-none text-dark">
                                         {{ category.last_topic.title|truncate(50) }}
                                     </a>
@@ -212,7 +174,7 @@
                 <div class="empty-state">
                     <i class="bi bi-grid display-4 text-muted mb-3"></i>
                     <h5 class="text-muted mb-3">Aucune catégorie disponible</h5>
-                    {% if current_user.admin %}
+                    {% if current_user.is_authenticated and current_user.admin %}
                     <a href="#" class="btn btn-primary action-btn">
                         <i class="bi bi-plus-circle me-2"></i> Créer une catégorie
                     </a>
@@ -224,13 +186,13 @@
 
         <!-- Sidebar -->
         <div class="col-lg-3">
-            <!-- Popular Topics -->
+            <!-- Trending Topics -->
             <div class="sidebar-section">
                 <h5 class="mb-3"><i class="bi bi-fire text-danger me-2"></i>Sujets en vogue</h5>
                 {% if popular_topics %}
                 {% for topic in popular_topics %}
                 <div class="trending-topic">
-                    <a href="{{ url_for('forum_topic', category_slug=topic.category.slug, topic_slug=topic.slug) }}" 
+                    <a href="{{ url_for('forum_topic', category_slug=topic.category.slug, topic_slug=topic.slug) }}"
                        class="text-decoration-none text-dark">
                         <h6 class="mb-1">{{ topic.title|truncate(40) }}</h6>
                     </a>
@@ -244,6 +206,42 @@
                 <div class="empty-state">
                     <i class="bi bi-bar-chart display-4 text-muted mb-3"></i>
                     <h5 class="text-muted mb-3">Aucun sujet populaire</h5>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="sidebar-section">
+                <h5 class="mb-3"><i class="bi bi-lightning-fill text-warning me-2"></i>Activité récente</h5>
+                {% if recent_topics %}
+                {% for topic in recent_topics %}
+                <div class="trending-topic">
+                    <div class="d-flex align-items-center">
+                        <img src="{{ topic.user.profile_picture_url }}"
+                             class="user-avatar me-2"
+                             alt="{{ topic.user.username }}">
+                        <div class="flex-grow-1">
+                            <a href="{{ url_for('forum_topic', category_slug=topic.category.slug, topic_slug=topic.slug) }}"
+                               class="text-decoration-none text-dark">
+                                {{ topic.title|truncate(30) }}
+                            </a>
+                            <div class="topic-meta small text-muted">
+                                Par {{ topic.user.username }} • {{ topic.created_at|time_ago }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                <a href="#" class="btn btn-sm btn-outline-primary w-100 mt-2 action-btn">Voir plus</a>
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-chat-square-text display-4 text-muted mb-3"></i>
+                    <h5 class="text-muted mb-3">Aucune activité récente</h5>
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('new_topic') }}" class="btn btn-primary action-btn">
+                        <i class="bi bi-plus-circle me-2"></i> Créer un sujet
+                    </a>
+                    {% endif %}
                 </div>
                 {% endif %}
             </div>
@@ -265,27 +263,15 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Animation fluide pour les clics sur les cartes
-    document.querySelectorAll('.category-card, .action-btn').forEach(element => {
+    // Smooth transition for link clicks
+    document.querySelectorAll('.category-card a, .action-btn').forEach(element => {
         element.addEventListener('click', function(e) {
-            if (e.target.tagName !== 'A' && e.target.closest('a')) {
-                e.preventDefault();
-                const href = e.target.closest('a').href;
-                document.body.style.opacity = '0';
-                setTimeout(() => window.location.href = href, 300);
-            }
+            e.preventDefault();
+            const href = this.href;
+            document.body.style.opacity = '0';
+            setTimeout(() => window.location.href = href, 300);
         });
     });
-
-    // Actualisation dynamique des sujets récents (optionnel)
-    const refreshTopics = () => {
-        fetch('{{ url_for("forum_home") }}', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-            .then(response => response.text())
-            .then(html => {
-                document.querySelector('.forum-container').innerHTML = 
-                    new DOMParser().parseFromString(html, 'text/html').querySelector('.forum-container').innerHTML;
-            });
-    };
 });
 </script>
 {% endblock %}
