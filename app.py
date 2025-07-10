@@ -2343,7 +2343,7 @@ def private_chat(user_id):
             return redirect(url_for('private_chat', user_id=user_id))
     
     messages = PrivateMessage.query.filter_by(chat_id=chat.id).order_by(PrivateMessage.timestamp.asc()).all()
-    return render_template('chat/private_chat.html', chat=chat, target_user=target_user, messages=messages)
+    return render_template('forum/private_chat.html', chat=chat, target_user=target_user, messages=messages)
 
 # New route for joining a crowdfunding campaign
 @app.route('/campaign/<int:campaign_id>/request-join', methods=['POST'])
