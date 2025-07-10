@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Chat avec {{ target_user.username }} - TontinePlus{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .chat-header {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .chat-messages {
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 1rem;
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .message {
+        display: flex;
+        margin-bottom: 1rem;
+    }
+
+    .message.sent {
+        justify-content: flex-end;
+    }
+
+    .message.received {
+        justify-content: flex-start;
+    }
+
+    .message-content {
+        max-width: 70%;
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        position: relative;
+    }
+
+    .message.sent .message-content {
+        background: #3b82f6;
+        color: white;
+    }
+
+    .message.received .message-content {
+        background: #e5e7eb;
+        color: #1f2937;
+    }
+
+    .message-timestamp {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+
+    .chat-form {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .chat-form input {
+        flex-grow: 1;
+        padding: 0.75rem;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        background: rgba(255, 255, 255, 0.95);
+    }
+
+    .chat-form button {
+        background: #10b981;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .chat-form button:hover {
+        background: #059669;
+        transform: scale(1.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-header">
+        <h4><i class="bi bi-chat-fill me-2"></i>Discussion avec {{ target_user.username }}</h4>
+    </div>
+    <div class="chat-messages" id="chat-messages">
+        {% for message in messages %}
+        <div class="message {{ 'sent' if message.sender_id == current_user.id else 'received' }}">
+            <div class="message-content">
+                {{ message.content }}
+                <div class="message-timestamp">{{ message.timestamp|format_datetime }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <form class="chat-form" id="chat-form">
+        <input type="text" id="message-input" placeholder="Écrivez votre message..." required>
+        <button type="submit"><i class="bi bi-send me-1"></i>Envoyer</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.0/socket.io.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const socket = io('/notifications');
+    socket.emit('join_private_chat', { chat_id: {{ chat.id }} });
+
+    const messagesContainer = document.getElementById('chat-messages');
+    const chatForm = document.getElementById('chat-form');
+    const messageInput = document.getElementById('message-input');
+
+    socket.on('new_private_message', function(data) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${data.sender === '{{ current_user.username }}' ? 'sent' : 'received'}`;
+        messageDiv.innerHTML = `
+            <div class="message-content">
+                ${data.message}
+                <div class="message-timestamp">${new Date(data.timestamp).toLocaleString()}</div>
+            </div>
+        `;
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    });
+
+    chatForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const message = messageInput.value.trim();
+        if (message) {
+            socket.emit('private_message', {
+                chat_id: {{ chat.id }},
+                message: message
+            });
+            messageInput.value = '';
+            // Submit form to server for persistence
+            fetch('{{ url_for("private_chat", user_id=target_user.id) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `message=${encodeURIComponent(message)}`
+            });
+        }
+    });
+});
+</script>
+{% endblock %}
