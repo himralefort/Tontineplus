@@ -215,6 +215,26 @@ class UserFollow(db.Model):
     
     follower = db.relationship('User', foreign_keys=[follower_id])
     followed = db.relationship('User', foreign_keys=[followed_id])
+
+
+class PrivateChat(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user1_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user2_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user1 = db.relationship('User', foreign_keys=[user1_id], backref='private_chats_as_user1')
+    user2 = db.relationship('User', foreign_keys=[user2_id], backref='private_chats_as_user2')
+    messages = db.relationship('PrivateMessage', backref='chat', lazy='dynamic')
+
+class PrivateMessage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    chat_id = db.Column(db.Integer, db.ForeignKey('private_chat.id'), nullable=False)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    sender = db.relationship('User', backref='private_messages')
     
 class Tontine(db.Model):
     __tablename__ = 'tontine'
@@ -2222,8 +2242,15 @@ def create_cycle(tontine_id):
 @app.route('/forum')
 def forum_home():
     try:
-        # Fetch active categories
-        categories = ForumCategory.query.filter_by(is_active=True).order_by(ForumCategory.order, ForumCategory.created_at).all()
+        # Fetch active categories, prioritizing Présentations
+        categories = ForumCategory.query.filter_by(is_active=True).order_by(
+            db.case(
+                value=ForumCategory.slug,
+                whens={'presentations': 0},
+                else_=ForumCategory.order
+            ),
+            ForumCategory.created_at
+        ).all()
 
         # Fetch recent topics (e.g., last 5 topics across all categories)
         recent_topics = ForumTopic.query.order_by(ForumTopic.updated_at.desc()).limit(5).all()
@@ -2231,10 +2258,24 @@ def forum_home():
         # Fetch popular topics (e.g., top 5 by views)
         popular_topics = ForumTopic.query.order_by(ForumTopic.views.desc()).limit(5).all()
 
-        # Calculate stats for each category
+        # Calculate stats for each category and enrich Présentations topics
         for category in categories:
             category.topics_count = category.topics.count()
             category.last_topic = category.topics.order_by(ForumTopic.updated_at.desc()).first()
+            if category.slug == 'presentations':
+                # Enrich topics with user profile data
+                for topic in category.topics:
+                    topic.user_profile = {
+                        'username': topic.user.username,
+                        'first_name': topic.user.first_name,
+                        'last_name': topic.user.last_name,
+                        'profile_picture_url': topic.user.profile_picture_url,
+                        'joined_at': topic.user.created_at,
+                        'bio': topic.user.bio if hasattr(topic.user, 'bio') else 'No bio available',
+                        'campaigns': FundraisingCampaign.query.filter_by(
+                            creator_id=topic.user.id, is_active=True
+                        ).limit(3).all()
+                    }
 
         # Community stats
         total_users = User.query.count()
@@ -2252,6 +2293,136 @@ def forum_home():
         current_app.logger.error(f"Error fetching forum data: {str(e)}")
         flash("Une erreur est survenue lors du chargement du forum", "danger")
         return render_template('errors/500.html'), 500
+
+
+
+# New route for private chat
+@app.route('/chat/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def private_chat(user_id):
+    target_user = User.query.get_or_404(user_id)
+    if user_id == current_user.id:
+        flash("Vous ne pouvez pas discuter avec vous-même", "danger")
+        return redirect(url_for('forum_home'))
+    
+    # Find or create a private chat
+    chat = PrivateChat.query.filter(
+        db.or_(
+            db.and_(PrivateChat.user1_id == current_user.id, PrivateChat.user2_id == user_id),
+            db.and_(PrivateChat.user1_id == user_id, PrivateChat.user2_id == current_user.id)
+        )
+    ).first()
+    
+    if not chat:
+        chat = PrivateChat(user1_id=current_user.id, user2_id=user_id)
+        db.session.add(chat)
+        db.session.commit()
+    
+    if request.method == 'POST':
+        content = request.form.get('message')
+        if content:
+            new_message = PrivateMessage(
+                chat_id=chat.id,
+                sender_id=current_user.id,
+                content=content
+            )
+            db.session.add(new_message)
+            db.session.commit()
+            
+            # Emit Socket.IO event for real-time chat
+            socketio.emit('new_private_message', {
+                'chat_id': chat.id,
+                'sender': current_user.username,
+                'message': content,
+                'timestamp': new_message.timestamp.isoformat(),
+                'avatar': current_user.profile_picture_url
+            }, room=f'chat_{chat.id}')
+            
+            flash("Message envoyé", "success")
+            return redirect(url_for('private_chat', user_id=user_id))
+    
+    messages = PrivateMessage.query.filter_by(chat_id=chat.id).order_by(PrivateMessage.timestamp.asc()).all()
+    return render_template('chat/private_chat.html', chat=chat, target_user=target_user, messages=messages)
+
+# New route for joining a crowdfunding campaign
+@app.route('/campaign/<int:campaign_id>/request-join', methods=['POST'])
+@login_required
+def campaign_request_join(campaign_id):
+    campaign = FundraisingCampaign.query.get_or_404(campaign_id)
+    
+    # Check if user has already requested or donated
+    existing_request = JoinRequest.query.filter_by(
+        user_id=current_user.id,
+        campaign_id=campaign.id,
+        status='pending'
+    ).first()
+    
+    if existing_request:
+        flash("Vous avez déjà une demande en attente pour cette campagne", "info")
+        return redirect(url_for('campaign_detail', campaign_id=campaign.id))
+    
+    existing_donation = Donation.query.filter_by(
+        campaign_id=campaign.id,
+        donor_id=current_user.id,
+        status='completed'
+    ).first()
+    
+    if existing_donation:
+        flash("Vous avez déjà contribué à cette campagne", "info")
+        return redirect(url_for('campaign_detail', campaign_id=campaign.id))
+    
+    # Create join request
+    new_request = JoinRequest(
+        user_id=current_user.id,
+        campaign_id=campaign.id,
+        status='pending'
+    )
+    db.session.add(new_request)
+    db.session.commit()
+    
+    # Notify campaign creator
+    send_notification(
+        campaign.creator_id,
+        f"{current_user.username} a demandé à rejoindre votre campagne '{campaign.title}'",
+        url_for('campaign_detail', campaign_id=campaign.id)
+    )
+    
+    flash("Votre demande a été envoyée au créateur de la campagne", "success")
+    return redirect(url_for('campaign_detail', campaign_id=campaign.id))
+
+# Socket.IO handler for private chat
+@socketio.on('join_private_chat')
+def handle_private_chat_join(data):
+    chat_id = data['chat_id']
+    join_room(f'chat_{chat_id}')
+    emit('status', {'msg': f"{current_user.username} a rejoint la discussion"}, room=f'chat_{chat_id}')
+
+@socketio.on('private_message')
+def handle_private_message(data):
+    if not current_user.is_authenticated:
+        disconnect()
+        return
+    
+    chat_id = data['chat_id']
+    content = data['message']
+    timestamp = datetime.utcnow()
+    
+    new_message = PrivateMessage(
+        chat_id=chat_id,
+        sender_id=current_user.id,
+        content=content,
+        timestamp=timestamp
+    )
+    db.session.add(new_message)
+    db.session.commit()
+    
+    emit('new_private_message', {
+        'chat_id': chat_id,
+        'sender': current_user.username,
+        'message': content,
+        'timestamp': timestamp.isoformat(),
+        'avatar': current_user.profile_picture_url
+    }, room=f'chat_{chat_id}')
 
 
 @app.route('/forum/<category_slug>')
