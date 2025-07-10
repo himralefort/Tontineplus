@@ -2245,12 +2245,13 @@ def forum_home():
         # Fetch active categories, prioritizing Présentations
         categories = ForumCategory.query.filter_by(is_active=True).order_by(
             db.case(
+                {'presentations': 0},
                 value=ForumCategory.slug,
-                whens={'presentations': 0},
                 else_=ForumCategory.order
             ),
             ForumCategory.created_at
         ).all()
+
 
         # Fetch recent topics (e.g., last 5 topics across all categories)
         recent_topics = ForumTopic.query.order_by(ForumTopic.updated_at.desc()).limit(5).all()
