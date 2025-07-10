@@ -11,6 +11,7 @@
         --card-bg: rgba(255, 255, 255, 0.95);
         --glass-bg: rgba(255, 255, 255, 0.1);
         --glass-border: 1px solid rgba(255, 255, 255, 0.2);
+        --highlight-border: 2px solid #f59e0b; /* Gold border for Présentations */
     }
 
     body {
@@ -65,6 +66,11 @@
         position: relative;
     }
 
+    .category-card.presentations {
+        border: var(--highlight-border);
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+    }
+
     .category-card:hover {
         transform: translateY(-8px);
         box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
@@ -82,7 +88,7 @@
 
     .topic-preview {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         gap: 1rem;
         padding: 0.5rem 0;
         transition: background 0.3s ease;
@@ -94,8 +100,8 @@
     }
 
     .user-avatar {
-        width: 40px;
-        height: 40px;
+        width: 48px;
+        height: 48px;
         border-radius: 50%;
         object-fit: cover;
         border: 2px solid var(--accent-color);
@@ -151,6 +157,36 @@
         background: #059669;
     }
 
+    .message-btn {
+        background: #3b82f6;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+    }
+
+    .message-btn:hover {
+        background: #2563eb;
+        transform: scale(1.05);
+    }
+
+    .contribute-btn {
+        background: #f59e0b;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+    }
+
+    .contribute-btn:hover {
+        background: #d97706;
+        transform: scale(1.05);
+    }
+
     .empty-state {
         text-align: center;
         padding: 2.5rem;
@@ -188,6 +224,25 @@
         top: 50%;
         transform: translateY(-50%);
         color: var(--text-color);
+    }
+
+    .profile-info {
+        font-size: 0.9rem;
+        color: var(--text-color);
+        margin-top: 0.5rem;
+    }
+
+    .campaign-list {
+        margin-top: 1rem;
+    }
+
+    .campaign-item {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .campaign-item:last-child {
+        border-bottom: none;
     }
 
     @keyframes fadeIn {
@@ -243,7 +298,7 @@
                 {% if categories %}
                 <div class="category-grid">
                     {% for category in categories %}
-                    <div class="category-card" data-aos="fade-up">
+                    <div class="category-card {% if category.slug == 'presentations' %}presentations{% endif %}" data-aos="fade-up">
                         <div class="category-header">
                             <h5 class="mb-1">
                                 <a href="{{ url_for('forum_category', category_slug=category.slug) }}"
@@ -267,6 +322,39 @@
                                     <div class="topic-meta small text-muted">
                                         Par {{ category.last_topic.user.username }} • {{ category.last_topic.updated_at|time_ago }}
                                     </div>
+                                    {% if category.slug == 'presentations' and category.last_topic.user_profile %}
+                                    <div class="profile-info">
+                                        <strong>{{ category.last_topic.user_profile.first_name }} {{ category.last_topic.user_profile.last_name }}</strong><br>
+                                        Inscrit depuis : {{ category.last_topic.user_profile.joined_at|format_date('long') }}<br>
+                                        Bio : {{ category.last_topic.user_profile.bio|truncate(100) }}<br>
+                                        {% if category.last_topic.user_profile.campaigns %}
+                                        <div class="campaign-list">
+                                            <strong>Campagnes actives :</strong>
+                                            {% for campaign in category.last_topic.user_profile.campaigns %}
+                                            <div class="campaign-item">
+                                                <a href="{{ url_for('campaign_detail', campaign_id=campaign.id) }}"
+                                                   class="text-decoration-none">
+                                                    {{ campaign.title|truncate(40) }}
+                                                </a>
+                                                {% if current_user.is_authenticated %}
+                                                <form action="{{ url_for('campaign_request_join', campaign_id=campaign.id) }}" method="POST" style="display:inline;">
+                                                    <button type="submit" class="contribute-btn ms-2">
+                                                        <i class="bi bi-wallet2 me-1"></i> Contribuer
+                                                    </button>
+                                                </form>
+                                                {% endif %}
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                        {% if current_user.is_authenticated %}
+                                        <a href="{{ url_for('private_chat', user_id=category.last_topic.user.id) }}"
+                                           class="message-btn mt-2">
+                                            <i class="bi bi-chat-fill me-1"></i> Envoyer un message
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
                                 </div>
                                 <span class="stats-badge">{{ category.topics_count }} sujets</span>
                             </div>
@@ -378,12 +466,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Smooth transition for link clicks
-    document.querySelectorAll('.category-card a, .action-btn').forEach(element => {
+    document.querySelectorAll('.category-card a, .action-btn, .message-btn, .contribute-btn').forEach(element => {
         element.addEventListener('click', function(e) {
-            e.preventDefault();
-            const href = this.href;
-            document.body.style.opacity = '0';
-            setTimeout(() => window.location.href = href, 300);
+            if (this.tagName === 'A') {
+                e.preventDefault();
+                const href = this.href;
+                document.body.style.opacity = '0';
+                setTimeout(() => window.location.href = href, 300);
+            }
         });
     });
 
@@ -398,7 +488,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Real-time notification for new topics (using Socket.IO)
+    // Real-time notification for new topics
     if (typeof io !== 'undefined') {
         const socket = io('/notifications');
         socket.on('connect', function() {
