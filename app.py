@@ -2221,34 +2221,37 @@ def create_cycle(tontine_id):
 # Routes pour le forum
 @app.route('/forum')
 def forum_home():
-    # Exemple de données simulées (adapter à ta vraie structure)
-    categories = [
-        {
-            "slug": "investissements",
-            "name": "Investissements",
-            "description": "Discussion autour des investissements.",
-            "topics": [
-                {"slug": "topic1", "title": "Premier sujet", "updated_at": datetime(2025,7,8,10,0), "user": {"username": "alice", "profile_picture_url": "/static/alice.jpg"}},
-                {"slug": "topic2", "title": "Deuxième sujet", "updated_at": datetime(2025,7,7,9,0), "user": {"username": "bob", "profile_picture_url": "/static/bob.jpg"}},
-            ]
-        },
-        # autres catégories...
-    ]
+    try:
+        # Fetch active categories
+        categories = ForumCategory.query.filter_by(is_active=True).order_by(ForumCategory.order, ForumCategory.created_at).all()
 
-    # Trier les topics dans chaque catégorie par updated_at décroissant
-    for category in categories:
-        category["topics"] = sorted(category["topics"], key=lambda t: t["updated_at"], reverse=True)
-        category["topics_count"] = len(category["topics"])
-        category["last_topic"] = category["topics"][0] if category["topics"] else None
+        # Fetch recent topics (e.g., last 5 topics across all categories)
+        recent_topics = ForumTopic.query.order_by(ForumTopic.updated_at.desc()).limit(5).all()
 
-    # Autres variables que tu passes au template
-    recent_topics = []  # préparer tes sujets récents
-    popular_topics = []  # préparer tes sujets populaires
+        # Fetch popular topics (e.g., top 5 by views)
+        popular_topics = ForumTopic.query.order_by(ForumTopic.views.desc()).limit(5).all()
 
-    return render_template('forum/index.html',
-                           categories=categories,
-                           recent_topics=recent_topics,
-                           popular_topics=popular_topics)
+        # Calculate stats for each category
+        for category in categories:
+            category.topics_count = category.topics.count()
+            category.last_topic = category.topics.order_by(ForumTopic.updated_at.desc()).first()
+
+        # Community stats
+        total_users = User.query.count()
+        total_topics = ForumTopic.query.count()
+        total_posts = ForumPost.query.count()
+
+        return render_template('forum/index.html',
+                             categories=categories,
+                             recent_topics=recent_topics,
+                             popular_topics=popular_topics,
+                             total_users=total_users,
+                             total_topics=total_topics,
+                             total_posts=total_posts)
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Error fetching forum data: {str(e)}")
+        flash("Une erreur est survenue lors du chargement du forum", "danger")
+        return render_template('errors/500.html'), 500
 
 
 @app.route('/forum/<category_slug>')
